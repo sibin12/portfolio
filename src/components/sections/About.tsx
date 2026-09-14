@@ -4,18 +4,21 @@ import { Target, Zap, Briefcase, ShieldCheck, Camera } from 'lucide-react';
 import { ShatterCard } from '../ui/ShatterCard';
 
 const mainSkills = [
-  'Node.js', 'PostgreSQL', 'MongoDB', 'Bun', 'Hono', 'TypeScript',
-  'Redis', 'Docker', 'React', 'AWS', 'Nginx', 'Go (learning)',
+  'Bun', 'Hono', 'PostgreSQL', 'Drizzle', 'Zod', 'TypeScript',
+  'Node.js', 'Express', 'MongoDB', 'React', 'Redis', 'Docker', 'Go (learning)',
 ];
 
 const coreStack = [
-  { name: 'Node.js', line: 'APIs' },
-  { name: 'PostgreSQL', line: 'Data that stays correct' },
-  { name: 'MongoDB', line: 'Flexible documents' },
-  { name: 'Bun', line: 'Fast runtime' },
+  { name: 'Bun / Hono', line: 'APIs I ship at Magadh' },
+  { name: 'PostgreSQL', line: 'Orders and reports' },
+  { name: 'Drizzle', line: 'Queries and filters' },
+  { name: 'Zod', line: 'Request schemas' },
+  { name: 'Node / Express', line: 'MERN APIs' },
+  { name: 'MongoDB', line: 'Most of my database work' },
+  { name: 'React', line: 'Before the backend focus' },
 ];
 
-const practices = ['System design', 'Concurrency', 'Query plans', 'REST', 'JWT', 'CI/CD', 'Linux', 'Docker'];
+const practices = ['MERN', 'REST APIs', 'MongoDB', 'Express', 'ERP APIs', 'PDF reports', 'Redis', 'Docker'];
 
 export const About: React.FC = () => {
   return (
@@ -26,7 +29,7 @@ export const About: React.FC = () => {
           The Evolution
         </h2>
         <p className="max-w-2xl text-lg text-slate-400">
-          Software Engineer at Magadh Industries. I ship backend systems that stay fast under load.
+          Started as a MERN developer. Now a backend engineer at Magadh Industries.
         </p>
       </div>
 
@@ -59,7 +62,7 @@ export const About: React.FC = () => {
                 <h3 className="text-2xl font-bold tracking-tight text-white">Technical Arsenal</h3>
               </div>
               <p className="mb-8 text-sm leading-relaxed text-slate-400">
-                Node for APIs. Postgres when the data must stay correct. Mongo when the shape moves. Bun when the runtime should be fast.
+                Bun and Hono on PostgreSQL at Magadh, with Drizzle and Zod. Before that, Node, Express, MongoDB, and React.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">

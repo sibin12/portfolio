@@ -46,11 +46,11 @@ export const Hero: React.FC = () => {
           <h1 className="mb-4 text-5xl font-black leading-[1.1] tracking-tight text-white md:text-7xl">
             Sibin Silu<span className="text-indigo-500">.</span>
             <br />
-            <span className="text-3xl font-bold text-slate-500 md:text-5xl">Node · Postgres · Mongo</span>
+            <span className="text-3xl font-bold text-slate-500 md:text-5xl">Bun · Hono · Postgres</span>
           </h1>
 
           <p className="mb-8 max-w-xl text-base leading-relaxed text-slate-400 md:text-lg">
-            I build backend systems with Node.js, PostgreSQL, MongoDB, and Bun. Clean APIs, and data that stays correct.
+            Software Engineer at Magadh. I also come from MERN — Node, Express, MongoDB, and React.
           </p>
 
           <div className="mb-10 flex flex-wrap gap-4">

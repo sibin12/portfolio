@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { LayoutGrid, RotateCcw } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 const solvedOf = (size: number) =>
   Array.from({ length: size * size }, (_, index) => (index + 1) % (size * size));
@@ -36,7 +36,100 @@ const shuffle = (size: number) => {
 const isSolved = (board: number[], size: number) =>
   board.every((tile, index) => tile === (index + 1) % (size * size));
 
+const glyphs = ['◆', '●', '▲', '■', '✦', '✚', '⬟', '◉'];
+
+const shuffleMemory = () => {
+  const deck = glyphs.flatMap((glyph) => [glyph, glyph]);
+  for (let index = deck.length - 1; index > 0; index -= 1) {
+    const swap = Math.floor(Math.random() * (index + 1));
+    [deck[index], deck[swap]] = [deck[swap], deck[index]];
+  }
+  return deck;
+};
+
+const MemoryPuzzle: React.FC = () => {
+  const [deck, setDeck] = useState(shuffleMemory);
+  const [open, setOpen] = useState<number[]>([]);
+  const [matched, setMatched] = useState<string[]>([]);
+  const [moves, setMoves] = useState(0);
+  const [lock, setLock] = useState(false);
+  const won = matched.length === glyphs.length;
+
+  useEffect(() => {
+    if (open.length < 2) return;
+    const [first, second] = open;
+    setLock(true);
+    const same = deck[first] === deck[second];
+    const timer = window.setTimeout(() => {
+      if (same) setMatched((current) => [...current, deck[first]]);
+      setOpen([]);
+      setLock(false);
+    }, same ? 280 : 700);
+    return () => window.clearTimeout(timer);
+  }, [open, deck]);
+
+  const flip = (index: number) => {
+    if (lock || won || open.includes(index) || matched.includes(deck[index])) return;
+    const next = [...open, index];
+    setOpen(next);
+    if (next.length === 2) setMoves((count) => count + 1);
+  };
+
+  const reset = () => {
+    setDeck(shuffleMemory());
+    setOpen([]);
+    setMatched([]);
+    setMoves(0);
+    setLock(false);
+  };
+
+  return (
+    <>
+      <div className="mb-4 flex items-center justify-between">
+        <p className="text-sm text-slate-400">Flip two boxes. Find the pairs.</p>
+        <p className="text-sm text-slate-400">{moves} moves</p>
+      </div>
+      <div className="grid grid-cols-4 gap-2" aria-label="Memory puzzle">
+        {deck.map((glyph, index) => {
+          const shown = open.includes(index) || matched.includes(glyph);
+          return (
+            <button
+              key={`${glyph}-${index}`}
+              type="button"
+              onClick={() => flip(index)}
+              aria-label={shown ? `Card ${glyph}` : 'Hidden card'}
+              className={`aspect-square rounded-xl text-2xl font-bold transition-colors ${
+                matched.includes(glyph)
+                  ? 'bg-emerald-600 text-white'
+                  : shown
+                    ? 'bg-indigo-500 text-white'
+                    : 'bg-slate-800 text-transparent hover:bg-slate-700'
+              }`}
+            >
+              {shown ? glyph : '·'}
+            </button>
+          );
+        })}
+      </div>
+      <div className="mt-4 flex items-center justify-between gap-3">
+        <p className="text-sm text-emerald-300" aria-live="polite">
+          {won ? `All pairs found in ${moves} moves.` : 'Match every symbol.'}
+        </p>
+        <button
+          type="button"
+          onClick={reset}
+          className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 px-3 py-1.5 text-xs text-slate-300 hover:text-white"
+        >
+          <RotateCcw className="h-3.5 w-3.5" />
+          Shuffle
+        </button>
+      </div>
+    </>
+  );
+};
+
 export const Puzzle: React.FC = () => {
+  const [mode, setMode] = useState<'slide' | 'memory'>('slide');
   const [size, setSize] = useState(3);
   const [board, setBoard] = useState(() => shuffle(3));
   const [moves, setMoves] = useState(0);
@@ -86,12 +179,38 @@ export const Puzzle: React.FC = () => {
       <div className="mb-10">
         <h2 className="mb-4 flex items-center gap-3 text-3xl font-bold text-white">
           <LayoutGrid className="text-indigo-400" />
-          Slide the boxes
+          Puzzles
         </h2>
-        <p className="max-w-xl text-slate-400">Click a box next to the gap, or use the arrow keys. Put them in order.</p>
+        <p className="max-w-xl text-slate-400">
+          {mode === 'slide' ? 'Slide a box into the gap. Put them in order.' : 'Flip two boxes and find the matching pairs.'}
+        </p>
       </div>
 
       <div className="max-w-md rounded-3xl border border-slate-800 bg-slate-900/40 p-5 md:p-6">
+        <div className="mb-4 flex gap-2">
+          {([
+            ['slide', 'Slide'],
+            ['memory', 'Memory'],
+          ] as const).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setMode(id)}
+              className={`rounded-full border px-3 py-1.5 text-xs ${
+                mode === id
+                  ? 'border-indigo-400 bg-indigo-500/15 text-white'
+                  : 'border-slate-700 text-slate-400 hover:text-white'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {mode === 'memory' ? (
+          <MemoryPuzzle />
+        ) : (
+          <>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div className="flex gap-2">
             {[3, 4].map((option) => (
@@ -161,6 +280,8 @@ export const Puzzle: React.FC = () => {
             Shuffle
           </button>
         </div>
+          </>
+        )}
       </div>
     </section>
   );

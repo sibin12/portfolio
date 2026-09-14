@@ -45,43 +45,25 @@ const projects: Project[] = [
   },
 ];
 
-/**
- * Extra pages. Delete any object here, or this whole array, to remove them.
- */
-const dummyProjects: Project[] = [
+/** Magadh ERP. Private — no public link. */
+const workProjects: Project[] = [
   {
-    title: 'Atlas',
-    description: 'Placeholder. Delete this object from dummyProjects when you do not need it.',
-    tags: ['Node.js', 'PostgreSQL'],
+    title: 'Magadh ERP',
+    description: 'The internal ERP. I work across the whole system, not one module.',
+    tags: ['Bun', 'Hono', 'PostgreSQL', 'Drizzle', 'Zod'],
     link: '',
-    signal: 'Draft',
-    points: ['Easy to remove', 'Sample only'],
+    signal: 'Magadh',
+    points: [
+      'Orders, warehouse loading, and factory PDF reports',
+      'Rewards, gift slabs, and point transactions',
+      'Raw materials and vehicle entry',
+      'Marketing visits',
+    ],
     tone: 'from-sky-500/25 to-slate-900',
-    draft: true,
-  },
-  {
-    title: 'Ledger',
-    description: 'Placeholder. Delete this object from dummyProjects when you do not need it.',
-    tags: ['PostgreSQL', 'Redis'],
-    link: '',
-    signal: 'Draft',
-    points: ['Easy to remove', 'Sample only'],
-    tone: 'from-amber-500/25 to-slate-900',
-    draft: true,
-  },
-  {
-    title: 'Pulse',
-    description: 'Placeholder. Delete this object from dummyProjects when you do not need it.',
-    tags: ['Socket.io', 'MongoDB'],
-    link: '',
-    signal: 'Draft',
-    points: ['Easy to remove', 'Sample only'],
-    tone: 'from-rose-500/25 to-slate-900',
-    draft: true,
   },
 ];
 
-const pages = [...projects, ...dummyProjects];
+const pages = [...workProjects, ...projects];
 
 const ProjectBody: React.FC<{ project: Project }> = ({ project }) => (
   <>
@@ -172,7 +154,7 @@ export const Projects: React.FC = () => {
       </div>
 
       <div className="mx-auto w-full max-w-md md:hidden">
-        <div className="relative h-[460px] [perspective:1400px]">
+        <div className="relative h-[540px] [perspective:1400px]">
           {Array.from({ length: behind }, (_, step) => (
             <div
               key={step}
