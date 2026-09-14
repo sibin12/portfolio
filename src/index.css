@@ -17,7 +17,6 @@
   }
 }
 
-/* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 10px;
 }
@@ -30,7 +29,6 @@
   @apply bg-slate-800 rounded-full border-4 border-slate-950 hover:bg-slate-700 transition-colors;
 }
 
-/* Glassmorphism utility */
 .glass {
   @apply bg-slate-900/50 backdrop-blur-md border border-slate-800;
 }
