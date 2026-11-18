@@ -1,50 +1,55 @@
 import React from 'react';
-import { motion, HTMLMotionProps } from 'framer-motion';
 import { cn } from '../../lib/utils';
 
-interface ButtonProps extends HTMLMotionProps<"button"> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
-  size?: 'sm' | 'md' | 'lg';
-  children: React.ReactNode;
+type Variant = 'primary' | 'secondary' | 'ghost';
+
+interface ButtonLinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
+  variant?: Variant;
+  icon?: React.ReactNode;
 }
 
-export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = 'primary', size = 'md', children, ...props }, ref) => {
-    const variants = {
-      primary: 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-[0_0_15px_rgba(79,70,229,0.4)]',
-      secondary: 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-[0_0_15px_rgba(16,185,129,0.4)]',
-      outline: 'border-2 border-slate-700 bg-transparent text-slate-200 hover:border-indigo-500 hover:text-white',
-      ghost: 'bg-transparent text-slate-400 hover:text-white hover:bg-slate-800/50',
-    };
+const variants: Record<Variant, string> = {
+  primary:
+    'bg-white text-ink-950 shadow-[0_10px_40px_-12px_rgba(165,180,252,0.7)] hover:bg-indigo-50 hover:shadow-[0_14px_50px_-12px_rgba(165,180,252,0.9)]',
+  secondary: 'border border-white/10 bg-white/[0.04] text-white backdrop-blur hover:border-white/20 hover:bg-white/[0.08]',
+  ghost: 'text-slate-400 hover:text-white',
+};
 
-    const sizes = {
-      sm: 'px-4 py-2 text-sm',
-      md: 'px-6 py-3 text-base',
-      lg: 'px-8 py-4 text-lg font-semibold',
-    };
+const isExternal = (href?: string) => !!href && /^https?:\/\//.test(href);
 
-    return (
-      <motion.button
-        ref={ref}
-        whileHover={{ scale: 1.02, y: -2 }}
-        whileTap={{ scale: 0.98 }}
-        className={cn(
-          'relative inline-flex items-center justify-center rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:pointer-events-none',
-          variants[variant],
-          sizes[size],
-          className
-        )}
-        {...props}
-      >
-        <span className="relative z-10">{children}</span>
-        {/* Magnetic Glow Effect Background */}
-        <motion.div
-          className="absolute inset-0 rounded-full bg-white/10 opacity-0 transition-opacity group-hover:opacity-100"
-          initial={false}
-        />
-      </motion.button>
-    );
-  }
+/** Every call to action on this site navigates, so buttons render as anchors. */
+export const ButtonLink: React.FC<ButtonLinkProps> = ({ variant = 'primary', icon, className, children, href, ...props }) => (
+  <a
+    href={href}
+    {...(isExternal(href) ? { target: '_blank', rel: 'noreferrer' } : {})}
+    className={cn(
+      'group inline-flex h-11 items-center justify-center gap-2 rounded-full px-5 text-sm font-semibold transition duration-300',
+      variants[variant],
+      className,
+    )}
+    {...props}
+  >
+    {children}
+    {icon && <span className="transition-transform duration-300 group-hover:translate-x-0.5">{icon}</span>}
+  </a>
 );
 
-Button.displayName = 'Button';
+interface IconLinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
+  label: string;
+}
+
+export const IconLink: React.FC<IconLinkProps> = ({ label, href, className, children, ...props }) => (
+  <a
+    href={href}
+    aria-label={label}
+    title={label}
+    {...(isExternal(href) ? { target: '_blank', rel: 'noreferrer' } : {})}
+    className={cn(
+      'grid h-10 w-10 place-items-center rounded-full border border-white/[0.08] bg-white/[0.03] text-slate-400 transition duration-300 hover:-translate-y-0.5 hover:border-white/20 hover:text-white',
+      className,
+    )}
+    {...props}
+  >
+    {children}
+  </a>
+);

@@ -1,209 +1,146 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { ExternalLink, Layers } from 'lucide-react';
-import { Card } from '../ui/Card';
+import { ArrowUpRight, Github, Lock } from 'lucide-react';
+import React from 'react';
+import { archiveProjects, featuredProjects, type Accent, type Project } from '../../data/profile';
+import { cn } from '../../lib/utils';
+import { GlassCard } from '../ui/GlassCard';
+import { Reveal } from '../ui/Reveal';
+import { Section } from '../ui/Section';
+import { Tag } from '../ui/Tag';
 
-interface Project {
-  title: string;
-  description: string;
-  tags: string[];
-  link: string;
-  signal: string;
-  points: string[];
-  tone: string;
-  /** Delete the object to remove a sample. */
-  draft?: boolean;
-}
+// Full class strings so Tailwind's scanner keeps them.
+const accents: Record<Accent, { field: string; orb: string; text: string }> = {
+  indigo: { field: 'from-indigo-500/30 via-indigo-500/5', orb: 'bg-indigo-400/50', text: 'text-indigo-300' },
+  emerald: { field: 'from-emerald-500/25 via-emerald-500/5', orb: 'bg-emerald-400/45', text: 'text-emerald-300' },
+  amber: { field: 'from-amber-500/25 via-amber-500/5', orb: 'bg-amber-300/45', text: 'text-amber-200' },
+  sky: { field: 'from-sky-500/25 via-sky-500/5', orb: 'bg-sky-400/45', text: 'text-sky-300' },
+  rose: { field: 'from-rose-500/25 via-rose-500/5', orb: 'bg-rose-400/45', text: 'text-rose-300' },
+  violet: { field: 'from-violet-500/30 via-violet-500/5', orb: 'bg-violet-400/50', text: 'text-violet-300' },
+};
 
-const projects: Project[] = [
-  {
-    title: 'GADGETGALAXY',
-    description: 'E-commerce for gadgets. Checkout treats a retried Razorpay webhook as the same payment, not a second order.',
-    tags: ['Node.js', 'MongoDB', 'Razorpay'],
-    link: 'http://gadgetgalaxy.live',
-    signal: 'Unique payment id',
-    points: ['Idempotent webhooks', 'Catalog index', 'OTP rate limit'],
-    tone: 'from-indigo-500/30 to-slate-900',
-  },
-  {
-    title: 'LOOPNET',
-    description: 'Video and chat. The server fans out to the room, and never proxies the video bytes.',
-    tags: ['Socket.io', 'MongoDB', 'Firebase'],
-    link: 'http://loopnet.gadgetgalaxy.live',
-    signal: 'Room fan-out',
-    points: ['Thread rooms', 'Session on handshake', 'Storage off origin'],
-    tone: 'from-emerald-500/25 to-slate-900',
-  },
-  {
-    title: 'Journal API',
-    description: 'Auth fails before a document is read. Email uniqueness lives in the index, not a check-then-insert.',
-    tags: ['Node.js', 'MongoDB', 'JWT'],
-    link: '',
-    signal: 'Auth first',
-    points: ['httpOnly session', 'Unique email', 'Short-lived token'],
-    tone: 'from-violet-500/25 to-slate-900',
-  },
-];
+const initials = (name: string) =>
+  name
+    .split(' ')
+    .map((word) => word[0])
+    .join('')
+    .slice(0, 2);
 
-/** Magadh ERP. Private — no public link. */
-const workProjects: Project[] = [
-  {
-    title: 'Magadh ERP',
-    description: 'The internal ERP. I work across the whole system, not one module.',
-    tags: ['Bun', 'Hono', 'PostgreSQL', 'Drizzle', 'Zod'],
-    link: '',
-    signal: 'Magadh',
-    points: [
-      'Orders, warehouse loading, and factory PDF reports',
-      'Rewards, gift slabs, and point transactions',
-      'Raw materials and vehicle entry',
-      'Marketing visits',
-    ],
-    tone: 'from-sky-500/25 to-slate-900',
-  },
-];
-
-const pages = [...workProjects, ...projects];
-
-const ProjectBody: React.FC<{ project: Project }> = ({ project }) => (
-  <>
-    <div className={`relative mb-6 flex h-36 items-end overflow-hidden rounded-xl bg-gradient-to-br ${project.tone} p-4`}>
-      <div className="absolute inset-0 bg-[radial-gradient(#ffffff14_1px,transparent_1px)] [background-size:16px_16px]" />
-      <span className="relative font-mono text-xs font-bold uppercase tracking-[0.2em] text-white/80">{project.signal}</span>
-      {project.draft && (
-        <span className="absolute left-3 top-3 rounded-full bg-slate-950/70 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-200">
-          Draft
-        </span>
-      )}
-      {project.link && (
-        <a
-          href={project.link}
-          target="_blank"
-          rel="noreferrer"
-          onClick={(event) => event.stopPropagation()}
-          className="absolute right-3 top-3 rounded-full bg-slate-950/70 p-2 text-white transition-colors hover:bg-indigo-600"
-          aria-label={`${project.title} live site`}
-        >
-          <ExternalLink size={16} />
-        </a>
-      )}
-    </div>
-    <h3 className="mb-2 text-xl font-bold text-white">{project.title}</h3>
-    <p className="mb-4 text-sm leading-relaxed text-slate-400">{project.description}</p>
-    <ul className="mb-6 space-y-1.5">
-      {project.points.map((point) => (
-        <li key={point} className="flex items-center gap-2 text-xs text-slate-500">
-          <span className="h-1 w-1 rounded-full bg-indigo-400" />
-          {point}
-        </li>
-      ))}
-    </ul>
-    <div className="mt-auto flex flex-wrap gap-2">
-      {project.tags.map((tag) => (
-        <span key={tag} className="rounded-md bg-indigo-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-indigo-300">
-          {tag}
-        </span>
-      ))}
-    </div>
-  </>
+const StatusBadge: React.FC<{ status: Project['status'] }> = ({ status }) => (
+  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-ink-950/60 px-2.5 py-1 text-[11px] font-medium text-slate-200 backdrop-blur">
+    <span className={cn('h-1.5 w-1.5 rounded-full', status === 'Live' ? 'bg-emerald-400' : 'bg-amber-300')} />
+    {status}
+  </span>
 );
 
-const Sheet: React.FC<{ project: Project }> = ({ project }) => (
-  <article className="flex h-full flex-col rounded-2xl border border-slate-800 bg-slate-900/90 p-6 shadow-[0_18px_50px_rgba(0,0,0,0.35)]">
-    <ProjectBody project={project} />
-  </article>
-);
-
-export const Projects: React.FC = () => {
-  const [index, setIndex] = useState(0);
-  const [turning, setTurning] = useState<Project | null>(null);
-  const current = pages[index];
-  const behind = Math.min(3, pages.length - 1);
-
-  const turn = () => {
-    if (turning || pages.length < 2) return;
-    setTurning(current);
-    setIndex((value) => (value + 1) % pages.length);
-  };
+const ProjectCard: React.FC<{ project: Project }> = ({ project }) => {
+  const accent = accents[project.accent];
 
   return (
-    <section className="mx-auto max-w-7xl px-6 py-24" id="projects">
-      <div className="mb-16">
-        <h2 className="mb-4 flex items-center gap-3 text-3xl font-bold text-white">
-          <Layers className="text-indigo-400" />
-          Featured Work
-        </h2>
-        <p className="max-w-2xl text-slate-400 md:hidden">Tap the page to open the next one.</p>
-        <p className="hidden max-w-2xl text-slate-400 md:block">Systems, not feature lists. Each one has a decision that keeps it correct under retry or load.</p>
+    <GlassCard className="flex h-full flex-col p-2">
+      <div className={cn('relative h-36 overflow-hidden rounded-[1.25rem] bg-gradient-to-br to-transparent', accent.field)}>
+        <div aria-hidden className="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.09)_1px,transparent_1px)] bg-[size:14px_14px] [mask-image:linear-gradient(to_bottom,black,transparent)]" />
+        <div aria-hidden className={cn('absolute -right-8 -top-10 h-36 w-36 rounded-full blur-2xl transition-transform duration-700 group-hover/card:scale-125', accent.orb)} />
+        <div aria-hidden className="absolute -right-4 -top-4 h-28 w-28 rounded-full border border-white/10" />
+        <div aria-hidden className="absolute -right-10 -top-10 h-40 w-40 rounded-full border border-white/[0.06]" />
+        <span aria-hidden className="absolute bottom-3 left-4 font-display text-5xl font-bold tracking-tighter text-white/[0.12]">
+          {initials(project.name)}
+        </span>
+        <div className="absolute inset-x-3 top-3 flex items-center justify-between">
+          <StatusBadge status={project.status} />
+          <span className="font-mono text-[11px] text-white/50">{project.year}</span>
+        </div>
       </div>
 
-      <div className="hidden gap-8 md:grid md:grid-cols-2 lg:grid-cols-3">
-        {pages.map((project, item) => (
-          <motion.div
-            key={project.title}
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: item * 0.08, duration: 0.45 }}
-          >
-            <Card className="flex h-full flex-col">
-              <ProjectBody project={project} />
-            </Card>
-          </motion.div>
-        ))}
-      </div>
+      <div className="flex flex-1 flex-col px-4 pb-4 pt-5">
+        <h3 className="font-display text-xl font-semibold tracking-tight text-white">{project.name}</h3>
+        <p className={cn('mt-1 text-sm', accent.text)}>{project.tagline}</p>
+        <p className="mt-4 text-sm leading-relaxed text-slate-400">{project.description}</p>
 
-      <div className="mx-auto w-full max-w-md md:hidden">
-        <div className="relative h-[540px] [perspective:1400px]">
-          {Array.from({ length: behind }, (_, step) => (
-            <div
-              key={step}
-              aria-hidden
-              className="absolute inset-0 rounded-2xl border border-slate-800 bg-slate-800/80"
-              style={{ transform: `translate(${(step + 1) * 14}px, ${(step + 1) * 10}px)` }}
-            />
+        <div className="mt-5 flex flex-wrap gap-1.5">
+          {project.stack.map((tech) => (
+            <Tag key={tech}>{tech}</Tag>
           ))}
-
-          <div
-            role="button"
-            tabIndex={0}
-            onClick={turn}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                turn();
-              }
-            }}
-            className="absolute inset-0 cursor-pointer text-left"
-            aria-label={`Open next page. Now showing ${current.title}`}
-          >
-            <Sheet project={current} />
-          </div>
-
-          {turning && (
-            <motion.button
-              type="button"
-              aria-hidden
-              tabIndex={-1}
-              className="absolute inset-0 z-10 origin-left cursor-pointer border-0 bg-transparent p-0 text-left"
-              initial={{ rotateY: 0 }}
-              animate={{ rotateY: -155 }}
-              transition={{ duration: 0.7, ease: [0.45, 0.02, 0.2, 1] }}
-              onAnimationComplete={() => setTurning(null)}
-              style={{ transformStyle: 'preserve-3d' }}
-            >
-              <div className="h-full [backface-visibility:hidden]">
-                <Sheet project={turning} />
-              </div>
-            </motion.button>
-          )}
-
         </div>
 
-        <p className="mt-8 text-center text-sm text-slate-500">
-          {index + 1} / {pages.length}
-        </p>
+        <div className="mt-auto flex items-center gap-5 pt-6 text-sm font-medium">
+          {project.live && (
+            <a href={project.live} target="_blank" rel="noreferrer" className="group/link inline-flex items-center gap-1 text-white transition-colors hover:text-indigo-200">
+              Live site
+              <ArrowUpRight size={15} className="transition-transform group-hover/link:-translate-y-0.5 group-hover/link:translate-x-0.5" />
+            </a>
+          )}
+          {project.code && (
+            <a href={project.code} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-slate-400 transition-colors hover:text-white">
+              <Github size={14} />
+              Source
+            </a>
+          )}
+          {!project.live && !project.code && (
+            <span className="inline-flex items-center gap-1.5 text-slate-500">
+              <Lock size={13} />
+              Private while in progress
+            </span>
+          )}
+        </div>
       </div>
-    </section>
+    </GlassCard>
   );
 };
+
+export const Projects: React.FC = () => (
+  <Section
+    id="work"
+    eyebrow="Selected work"
+    title={
+      <>
+        Things I&apos;ve <span className="text-gradient">built lately.</span>
+      </>
+    }
+    description="Personal projects from this year, from games you can play right now to full-stack apps still in progress."
+  >
+    <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+      {featuredProjects.map((project, index) => (
+        <Reveal key={project.name} delay={(index % 3) * 0.06}>
+          <ProjectCard project={project} />
+        </Reveal>
+      ))}
+    </div>
+
+    <Reveal className="mt-20">
+      <div className="mb-6 flex items-end justify-between gap-4">
+        <div>
+          <p className="eyebrow">Archive</p>
+          <h3 className="mt-3 font-display text-2xl font-semibold tracking-tight text-white">Where I started</h3>
+        </div>
+        <a href="https://github.com/sibin12?tab=repositories" target="_blank" rel="noreferrer" className="hidden items-center gap-1 text-sm text-slate-400 transition-colors hover:text-white sm:inline-flex">
+          All repositories
+          <ArrowUpRight size={15} />
+        </a>
+      </div>
+
+      <GlassCard interactive={false} className="overflow-hidden p-0">
+        <ul className="divide-y divide-white/[0.05]">
+          {archiveProjects.map((project) => (
+            <li key={project.name}>
+              <a
+                href={project.code}
+                target="_blank"
+                rel="noreferrer"
+                className="group grid grid-cols-[1fr_auto] items-center gap-4 px-6 py-5 transition-colors hover:bg-white/[0.03] md:grid-cols-[180px_1fr_220px_60px_20px]"
+              >
+                <span className="font-medium text-white">{project.name}</span>
+                <span className="hidden text-sm text-slate-400 md:block">{project.description}</span>
+                <span className="hidden flex-wrap gap-1.5 md:flex">
+                  {project.stack.map((tech) => (
+                    <Tag key={tech}>{tech}</Tag>
+                  ))}
+                </span>
+                <span className="hidden font-mono text-xs text-slate-500 md:block">{project.year}</span>
+                <ArrowUpRight size={16} className="text-slate-500 transition-all group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-white" />
+              </a>
+            </li>
+          ))}
+        </ul>
+      </GlassCard>
+    </Reveal>
+  </Section>
+);

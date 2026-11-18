@@ -1,150 +1,58 @@
+import { Bot, Database, Layers, Server } from 'lucide-react';
 import React from 'react';
-import { motion } from 'framer-motion';
-import { Target, Zap, Briefcase, ShieldCheck, Camera } from 'lucide-react';
-import { ShatterCard } from '../ui/ShatterCard';
+import { focusAreas, profile, stats } from '../../data/profile';
+import { GlassCard } from '../ui/GlassCard';
+import { Reveal } from '../ui/Reveal';
+import { Section } from '../ui/Section';
 
-const mainSkills = [
-  'Bun', 'Hono', 'PostgreSQL', 'Drizzle', 'Zod', 'TypeScript',
-  'Node.js', 'Express', 'MongoDB', 'React', 'Redis', 'Docker', 'Go (learning)',
-];
+const icons = { server: Server, database: Database, layers: Layers, bot: Bot };
 
-const coreStack = [
-  { name: 'Bun / Hono', line: 'APIs I ship at Magadh' },
-  { name: 'PostgreSQL', line: 'Orders and reports' },
-  { name: 'Drizzle', line: 'Queries and filters' },
-  { name: 'Zod', line: 'Request schemas' },
-  { name: 'Node / Express', line: 'MERN APIs' },
-  { name: 'MongoDB', line: 'Most of my database work' },
-  { name: 'React', line: 'Before the backend focus' },
-];
-
-const practices = ['MERN', 'REST APIs', 'MongoDB', 'Express', 'ERP APIs', 'PDF reports', 'Redis', 'Docker'];
-
-export const About: React.FC = () => {
-  return (
-    <section className="mx-auto max-w-7xl px-6 py-24" id="about">
-      <div className="mb-10">
-        <h2 className="mb-4 flex items-center gap-3 text-3xl font-bold text-white">
-          <Target className="text-emerald-400" />
-          The Evolution
-        </h2>
-        <p className="max-w-2xl text-lg text-slate-400">
-          Started as a MERN developer. Now a backend engineer at Magadh Industries.
-        </p>
-      </div>
-
-      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-        {coreStack.map((item) => (
-          <div
-            key={item.name}
-            className="rounded-2xl border border-slate-800 bg-slate-900/60 px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
-          >
-            <p className="text-sm font-bold text-white">{item.name}</p>
-            <p className="mt-1 text-xs text-indigo-300">{item.line}</p>
+export const About: React.FC = () => (
+  <Section
+    id="about"
+    eyebrow="About"
+    title={
+      <>
+        Backend engineer, <span className="text-gradient">MERN roots.</span>
+      </>
+    }
+  >
+    <div className="grid gap-5 lg:grid-cols-5">
+      <Reveal className="lg:col-span-3">
+        <GlassCard className="flex h-full flex-col p-7 md:p-10">
+          <div className="flex-1 space-y-5 text-[15px] leading-relaxed text-slate-300 md:text-base">
+            {profile.summary.map((paragraph) => (
+              <p key={paragraph}>{paragraph}</p>
+            ))}
           </div>
-        ))}
+          <dl className="mt-10 grid grid-cols-3 gap-4 border-t border-white/[0.06] pt-7">
+            {stats.map((stat) => (
+              <div key={stat.label}>
+                <dt className="sr-only">{stat.label}</dt>
+                <dd className="font-display text-2xl font-semibold tracking-tight text-white sm:text-3xl md:text-4xl">{stat.value}</dd>
+                <dd className="mt-1.5 text-xs leading-snug text-slate-500 md:text-[13px]">{stat.label}</dd>
+              </div>
+            ))}
+          </dl>
+        </GlassCard>
+      </Reveal>
+
+      <div className="grid gap-5 sm:grid-cols-2 lg:col-span-2">
+        {focusAreas.map((area, index) => {
+          const Icon = icons[area.icon];
+          return (
+            <Reveal key={area.title} delay={index * 0.06}>
+              <GlassCard className="h-full p-6">
+                <span className="grid h-10 w-10 place-items-center rounded-xl border border-white/[0.06] bg-gradient-to-br from-indigo-500/20 to-emerald-500/10 text-indigo-200">
+                  <Icon size={18} />
+                </span>
+                <h3 className="mt-5 font-display text-base font-semibold text-white">{area.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-400">{area.body}</p>
+              </GlassCard>
+            </Reveal>
+          );
+        })}
       </div>
-
-      <motion.div
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: '-80px' }}
-        variants={{ hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.08 } } }}
-        className="grid auto-rows-[220px] grid-cols-1 gap-6 md:grid-cols-3 lg:grid-cols-4"
-      >
-        <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }} className="md:col-span-2 md:row-span-2">
-          <ShatterCard gradient="indigo" className="flex h-full flex-col justify-between p-8">
-            <div>
-              <div className="mb-6 flex items-center gap-3">
-                <div className="rounded-xl bg-indigo-500/20 p-3 text-indigo-400">
-                  <Zap size={28} />
-                </div>
-                <h3 className="text-2xl font-bold tracking-tight text-white">Technical Arsenal</h3>
-              </div>
-              <p className="mb-8 text-sm leading-relaxed text-slate-400">
-                Bun and Hono on PostgreSQL at Magadh, with Drizzle and Zod. Before that, Node, Express, MongoDB, and React.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {mainSkills.map((tag) => (
-                <span key={tag} className="rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-indigo-300">
-                  {tag}
-                </span>
-              ))}
-            </div>
-          </ShatterCard>
-        </motion.div>
-
-        <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }} className="md:col-span-1 md:row-span-2">
-          <ShatterCard gradient="emerald" className="flex h-full flex-col justify-between p-8">
-            <div className="mb-6 w-fit rounded-xl bg-emerald-500/20 p-3 text-emerald-400">
-              <Briefcase size={28} />
-            </div>
-            <div className="space-y-6">
-              <div className="relative border-l-2 border-emerald-500/30 pl-5">
-                <div className="absolute -left-[7px] top-1.5 h-3 w-3 rounded-full bg-emerald-500 shadow-[0_0_10px_#10b981]" />
-                <h4 className="text-base font-bold text-white">Magadh Industries</h4>
-                <p className="text-xs font-semibold uppercase tracking-wider text-emerald-400">Software Engineer</p>
-                <p className="mt-1 text-[11px] italic text-slate-500">2024 - Present</p>
-              </div>
-              <div className="relative border-l-2 border-slate-700 pl-5">
-                <div className="absolute -left-[7px] top-1.5 h-3 w-3 rounded-full bg-slate-700" />
-                <h4 className="text-sm font-bold text-slate-300">Brototype</h4>
-                <p className="text-xs text-slate-500">MERN Specialist</p>
-                <p className="mt-1 text-[11px] italic text-slate-600">Dec 2023</p>
-              </div>
-              <div className="relative border-l-2 border-slate-700 pl-5">
-                <div className="absolute -left-[7px] top-1.5 h-3 w-3 rounded-full bg-slate-700" />
-                <h4 className="text-sm font-bold text-slate-300">MG University</h4>
-                <p className="text-xs text-slate-500">BCA Graduate</p>
-              </div>
-            </div>
-          </ShatterCard>
-        </motion.div>
-
-        <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }} className="md:col-span-2">
-          <ShatterCard gradient="slate" className="flex h-full flex-col justify-center p-8">
-            <div className="mb-4 flex items-center gap-4">
-              <ShieldCheck size={24} className="text-slate-400" />
-              <h3 className="text-lg font-bold text-white">How I work</h3>
-            </div>
-            <div className="flex flex-wrap gap-x-4 gap-y-2">
-              {practices.map((skill) => (
-                <span key={skill} className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
-                  <span className="h-1 w-1 rounded-full bg-emerald-500" />
-                  {skill}
-                </span>
-              ))}
-            </div>
-          </ShatterCard>
-        </motion.div>
-
-        <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }} className="md:col-span-2">
-          <ShatterCard gradient="indigo" className="group relative h-full overflow-hidden p-0">
-            <div className="flex h-full w-full">
-              {[
-                'https://images.unsplash.com/photo-1551632432-c735eef3279c?q=80&w=400&h=300&auto=format&fit=crop',
-                'https://images.unsplash.com/photo-1543351611-58f69d7c1781?q=80&w=400&h=300&auto=format&fit=crop',
-                'https://images.unsplash.com/photo-1529697210530-8c4bb1358ce5?q=80&w=400&h=300&auto=format&fit=crop',
-                profileFallback,
-              ].map((src) => (
-                <div key={src} className="relative h-full w-1/4 overflow-hidden border-r border-white/5 last:border-0">
-                  <img src={src} alt="" className="h-full w-full object-cover grayscale transition-all duration-700 group-hover:grayscale-0" />
-                </div>
-              ))}
-            </div>
-            <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-slate-950/55 transition-opacity duration-700 group-hover:opacity-0">
-              <div className="flex items-center gap-3">
-                <Camera size={18} className="text-indigo-400" />
-                <span className="text-xs font-black uppercase tracking-[0.2em] text-white">Snapshots</span>
-              </div>
-            </div>
-          </ShatterCard>
-        </motion.div>
-      </motion.div>
-    </section>
-  );
-};
-
-const profileFallback =
-  'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=400&h=300&auto=format&fit=crop';
+    </div>
+  </Section>
+);
