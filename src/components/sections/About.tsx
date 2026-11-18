@@ -13,7 +13,7 @@ export const About: React.FC = () => (
     eyebrow="About"
     title={
       <>
-        Backend engineer, <span className="text-gradient">MERN roots.</span>
+        Full-stack, <span className="text-gradient">backend first.</span>
       </>
     }
   >

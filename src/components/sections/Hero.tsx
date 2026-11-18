@@ -1,9 +1,20 @@
-import { ArrowRight, Bot, Github, Linkedin, Mail, MapPin, Server } from 'lucide-react';
+import { ArrowRight, Braces, Database, Github, Linkedin, Mail, MapPin, Server, Sparkles } from 'lucide-react';
 import React from 'react';
-import { profile } from '../../data/profile';
+import { heroChips, profile } from '../../data/profile';
+import { cn } from '../../lib/utils';
 import profileImg from '../../public/assets/images/profile.jpeg';
 import { ButtonLink, IconLink } from '../ui/Button';
 import { Reveal } from '../ui/Reveal';
+
+const chipIcons = { server: Server, database: Database, sparkles: Sparkles, braces: Braces };
+
+// Corners around the portrait, staggered so the chips never bob in sync.
+const chipPlaces = [
+  { position: '-left-8 top-10', tint: 'bg-emerald-500/15 text-emerald-300' },
+  { position: '-right-8 top-32 [animation-delay:-1.5s]', tint: 'bg-sky-500/15 text-sky-300' },
+  { position: '-left-10 bottom-32 [animation-delay:-3s]', tint: 'bg-violet-500/15 text-violet-300' },
+  { position: '-right-6 bottom-10 [animation-delay:-4.5s]', tint: 'bg-indigo-500/15 text-indigo-300' },
+];
 
 const Portrait: React.FC = () => (
   <div className="relative mx-auto aspect-[4/5] w-full max-w-[380px] lg:max-w-[420px]">
@@ -26,18 +37,24 @@ const Portrait: React.FC = () => (
       </div>
     </div>
 
-    <div className="surface absolute -left-6 top-12 hidden bg-ink-900/85 animate-float items-center gap-2.5 rounded-2xl px-3.5 py-2.5 text-xs font-medium text-slate-200 sm:flex">
-      <span className="grid h-7 w-7 place-items-center rounded-lg bg-indigo-500/15 text-indigo-300">
-        <Server size={14} />
-      </span>
-      Bun · Hono · Postgres
-    </div>
-    <div className="surface absolute -right-6 bottom-28 hidden bg-ink-900/85 animate-float items-center gap-2.5 rounded-2xl px-3.5 py-2.5 text-xs font-medium text-slate-200 [animation-delay:-3s] sm:flex">
-      <span className="grid h-7 w-7 place-items-center rounded-lg bg-emerald-500/15 text-emerald-300">
-        <Bot size={14} />
-      </span>
-      Applied AI with Claude
-    </div>
+    {heroChips.map((chip, index) => {
+      const Icon = chipIcons[chip.icon];
+      const place = chipPlaces[index % chipPlaces.length];
+      return (
+        <div
+          key={chip.label}
+          className={cn(
+            'surface absolute hidden animate-float items-center gap-2.5 whitespace-nowrap rounded-2xl bg-ink-900/85 px-3.5 py-2.5 text-xs font-medium text-slate-200 sm:flex',
+            place.position,
+          )}
+        >
+          <span className={cn('grid h-7 w-7 place-items-center rounded-lg', place.tint)}>
+            <Icon size={14} />
+          </span>
+          {chip.label}
+        </div>
+      );
+    })}
   </div>
 );
 

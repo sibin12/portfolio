@@ -1,5 +1,5 @@
 import { MotionConfig, motion, useScroll, useSpring } from 'framer-motion';
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { About } from './components/sections/About';
 import { Contact, Footer } from './components/sections/Contact';
 import { Experience } from './components/sections/Experience';
@@ -8,6 +8,19 @@ import { Navbar } from './components/sections/Navbar';
 import { Projects } from './components/sections/Projects';
 import { Stack } from './components/sections/Stack';
 import { Backdrop } from './components/ui/Backdrop';
+import { Intro } from './components/ui/Intro';
+
+const SEEN = 'sibin.intro-seen';
+
+/** Play the opening cut once per browser session, and never for visitors who prefer reduced motion. */
+const shouldPlayIntro = () => {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
+  try {
+    return sessionStorage.getItem(SEEN) !== '1';
+  } catch {
+    return true;
+  }
+};
 
 const ScrollProgress: React.FC = () => {
   const { scrollYProgress } = useScroll();
@@ -22,23 +35,49 @@ const ScrollProgress: React.FC = () => {
   );
 };
 
-const App: React.FC = () => (
-  <MotionConfig reducedMotion="user">
-    <Backdrop />
-    <ScrollProgress />
-    <Navbar />
-    <main className="relative z-10 overflow-x-clip">
-      <Hero />
-      <About />
-      <Experience />
-      <Projects />
-      <Stack />
-      <Contact />
-    </main>
-    <div className="relative z-10">
-      <Footer />
-    </div>
-  </MotionConfig>
-);
+const App: React.FC = () => {
+  const [playIntro] = useState(shouldPlayIntro);
+  // `intro` is the key of the running intro (null when none); `ready` mounts the page behind it.
+  const [intro, setIntro] = useState<number | null>(playIntro ? 1 : null);
+  const [ready, setReady] = useState(!playIntro);
+
+  const reveal = useCallback(() => setReady(true), []);
+  const finish = useCallback(() => {
+    setIntro(null);
+    try {
+      sessionStorage.setItem(SEEN, '1');
+    } catch {
+      /* ignore */
+    }
+  }, []);
+  const replay = useCallback(() => {
+    window.scrollTo({ top: 0 });
+    setIntro(Date.now());
+  }, []);
+
+  return (
+    <MotionConfig reducedMotion="user">
+      {intro !== null && <Intro key={intro} onReveal={reveal} onDone={finish} />}
+      {ready && (
+        <>
+          <Backdrop />
+          <ScrollProgress />
+          <Navbar onReplay={replay} />
+          <main className="relative z-10 overflow-x-clip">
+            <Hero />
+            <About />
+            <Experience />
+            <Projects />
+            <Stack />
+            <Contact />
+          </main>
+          <div className="relative z-10">
+            <Footer />
+          </div>
+        </>
+      )}
+    </MotionConfig>
+  );
+};
 
 export default App;

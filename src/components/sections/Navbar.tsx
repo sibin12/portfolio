@@ -1,17 +1,31 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { Menu, X } from 'lucide-react';
+import { Menu, Volume2, VolumeX, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { navLinks, profile } from '../../data/profile';
 import { useActiveSection } from '../../hooks/useActiveSection';
+import { sound } from '../../lib/sound';
 import { cn } from '../../lib/utils';
 import { ButtonLink } from '../ui/Button';
 
 const sectionIds = navLinks.map((link) => link.href.slice(1));
 
-export const Navbar: React.FC = () => {
+interface NavbarProps {
+  /** Clicking the logo plays the opening cut again (with sound, if it is on). */
+  onReplay: () => void;
+}
+
+export const Navbar: React.FC<NavbarProps> = ({ onReplay }) => {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [soundOn, setSoundOn] = useState(sound.enabled);
   const active = useActiveSection(sectionIds);
+
+  const toggleSound = () => {
+    const next = !soundOn;
+    sound.setEnabled(next);
+    setSoundOn(next);
+    sound.slice();
+  };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -31,7 +45,16 @@ export const Navbar: React.FC = () => {
             : 'border-transparent bg-transparent',
         )}
       >
-        <a href="#top" className="font-display text-lg font-bold tracking-tight text-white">
+        <a
+          href="#top"
+          title="Replay intro"
+          onClick={(event) => {
+            event.preventDefault();
+            setOpen(false);
+            onReplay();
+          }}
+          className="font-display text-lg font-bold tracking-tight text-white"
+        >
           {profile.firstName.toLowerCase()}
           <span className="text-gradient">.</span>
         </a>
@@ -64,6 +87,19 @@ export const Navbar: React.FC = () => {
         </ul>
 
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={toggleSound}
+            aria-pressed={soundOn}
+            aria-label={soundOn ? 'Turn sound off' : 'Turn sound on'}
+            title={soundOn ? 'Sound on' : 'Sound off'}
+            className={cn(
+              'grid h-9 w-9 place-items-center rounded-full transition-colors hover:bg-white/[0.06]',
+              soundOn ? 'text-indigo-200' : 'text-slate-500 hover:text-white',
+            )}
+          >
+            {soundOn ? <Volume2 size={17} /> : <VolumeX size={17} />}
+          </button>
           <ButtonLink href={`mailto:${profile.email}`} className="hidden h-9 px-4 text-[13px] sm:inline-flex">
             Let&apos;s talk
           </ButtonLink>
