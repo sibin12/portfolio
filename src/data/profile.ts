@@ -3,10 +3,6 @@
  * so updating the portfolio means editing data, not components.
  */
 
-import brainplayShot from '../public/assets/images/projects/brainplay.webp';
-import goVisualizerShot from '../public/assets/images/projects/govis.webp';
-import jetpackShot from '../public/assets/images/projects/jetpack.webp';
-
 export type Accent = 'indigo' | 'emerald' | 'amber' | 'sky' | 'rose' | 'violet';
 
 export interface Link {
@@ -29,27 +25,18 @@ export interface Role {
   current?: boolean;
 }
 
-/** A finished project people can open and use, shown with a real screenshot. */
-export interface LiveProject {
+export type ProjectStatus = 'Live' | 'In progress' | 'Private';
+
+export interface Project {
   name: string;
   tagline: string;
   description: string;
-  points: string[];
   stack: string[];
+  status: ProjectStatus;
   year: string;
   accent: Accent;
-  live: string;
-  code: string;
-  image: string;
-}
-
-/** Work that is still being built, shown compactly with no links. */
-export interface WorkshopProject {
-  name: string;
-  tagline: string;
-  description: string;
-  stack: string[];
-  accent: Accent;
+  live?: string;
+  code?: string;
 }
 
 export interface ArchiveProject {
@@ -185,76 +172,73 @@ export const education = {
   period: '2018 — 2021',
 };
 
-export const liveProjects: LiveProject[] = [
+/** Ranked best first: live projects people can open, then work in progress. */
+export const featuredProjects: Project[] = [
   {
     name: 'BrainPlay Kids',
     tagline: '3D memory and brain games for every age',
     description:
-      'A free brain-games app for the whole family, from bubble pop for babies to N-Back and Stroop for adults, hosted by Bo, a 3D cartoon mascot.',
-    points: ['24 games across six age groups, 8 levels each', 'Installable PWA that works offline, no ads, no tracking', 'One shared three.js scene, every sound made in code'],
-    stack: ['Three.js', 'PWA', 'Web Audio', 'JavaScript'],
+      'Twenty-plus games grouped by age, from bubble pop for babies to N-Back and Stroop for adults. Installable PWA that works offline, with no ads and no tracking.',
+    stack: ['Three.js', 'PWA', 'Service Worker', 'JavaScript'],
+    status: 'Live',
     year: '2026',
-    accent: 'violet',
+    accent: 'amber',
     live: 'https://sibin12.github.io/brainplay/',
     code: 'https://github.com/sibin12/brainplay',
-    image: brainplayShot,
   },
   {
     name: 'Go Memory Visualizer',
     tagline: 'See where Go keeps your values',
     description:
-      'An interactive explainer for Go memory. Run real functions and watch values land on the stack or escape to the heap, then trigger the garbage collector.',
-    points: ['Shows the compiler’s escape-analysis reason for every value', 'Guided walkthrough and a plain-language guide for beginners', 'Keyboard-driven, with a live inspector of the Go code'],
-    stack: ['React 19', 'TypeScript', 'Tailwind CSS', 'Vite'],
+      'Run real Go functions and watch values land on the stack or escape to the heap, then trigger the garbage collector. A plain-language guide explains every idea for beginners.',
+    stack: ['Go', 'React', 'TypeScript', 'Vite'],
+    status: 'Live',
     year: '2026',
-    accent: 'sky',
+    accent: 'indigo',
     live: 'https://sibin12.github.io/go-visualizers/',
     code: 'https://github.com/sibin12/go-visualizers',
-    image: goVisualizerShot,
   },
   {
     name: 'Jetpack Arena',
     tagline: 'A Mini Militia style browser shooter',
     description:
-      'Fly, aim, shoot and throw grenades against bots or friends. The whole game is one HTML file, with no game server and no install.',
-    points: ['Three maps, five weapons and bots on three difficulty levels', 'Peer-to-peer multiplayer over WebRTC with a room code', 'Every line of the movement, physics and maths commented'],
+      'The whole game in a single HTML file: canvas rendering, commented physics, and peer-to-peer multiplayer over WebRTC so friends can play without a game server.',
     stack: ['Canvas', 'WebRTC', 'PeerJS', 'JavaScript'],
+    status: 'Live',
     year: '2026',
-    accent: 'amber',
+    accent: 'rose',
     live: 'https://sibin12.github.io/jetpack-arena/',
     code: 'https://github.com/sibin12/jetpack-arena',
-    image: jetpackShot,
   },
-];
-
-export const workshopProjects: WorkshopProject[] = [
   {
     name: 'Wardrobe Intelligence',
     tagline: 'Buy smarter, wear more, waste less',
-    description: 'Checks whether a new piece of clothing adds anything to the wardrobe you already own.',
-    stack: ['Bun', 'Hono', 'PostgreSQL', 'React 19'],
+    description:
+      'A shopping assistant that checks whether a new piece of clothing adds anything to the wardrobe you already own, using a rule-based engine shared by API and web.',
+    stack: ['Bun', 'Hono', 'Drizzle', 'PostgreSQL', 'React 19', 'Cloudflare R2'],
+    status: 'In progress',
+    year: '2026',
     accent: 'violet',
   },
   {
     name: 'SiteSketch',
-    tagline: 'From satellite map to 3D model',
-    description: 'Trace a property on a map, sketch it in 2D and get an editable 3D model of the land and house.',
-    stack: ['Bun', 'Hono', 'PostgreSQL', 'React'],
+    tagline: 'From satellite map to 3D property model',
+    description:
+      'Trace a property on a satellite map, sketch its buildings and landscape in 2D, and get an editable 3D model. One canonical JSONB model with optimistic revisions.',
+    stack: ['Bun', 'Hono', 'Drizzle', 'PostgreSQL', 'React', 'Zustand'],
+    status: 'In progress',
+    year: '2026',
     accent: 'emerald',
   },
   {
     name: 'Pulsepath',
     tagline: 'Routine and workout tracker',
-    description: 'Calendar-first tracker with a session builder and a markdown diary on every date.',
-    stack: ['Go', 'PostgreSQL', 'React'],
+    description:
+      'Calendar-first tracker with a custom session builder and a markdown diary on every date. Go REST API with JWT, Postgres JSONB, and an in-memory store for demos.',
+    stack: ['Go', 'PostgreSQL', 'React', 'Tailwind CSS'],
+    status: 'In progress',
+    year: '2026',
     accent: 'sky',
-  },
-  {
-    name: 'Go Concurrency Visualizer',
-    tagline: 'Goroutines and channels, animated',
-    description: 'Tune a worker pool and a buffered channel, then simulate a traffic spike and watch the backlog.',
-    stack: ['Go', 'React', 'TypeScript'],
-    accent: 'indigo',
   },
 ];
 
