@@ -69,12 +69,21 @@ export const profile = {
   ],
 };
 
-/** Floating labels around the hero portrait. */
+/**
+ * Chips that bounce beside the hero portrait, most important first.
+ * Smaller screens show only as many as fit, starting from the top of this list.
+ */
 export const heroChips = [
-  { icon: 'server', label: 'Node.js · Express · MongoDB' },
-  { icon: 'database', label: 'Bun · Hono · PostgreSQL' },
-  { icon: 'sparkles', label: 'AI-powered features' },
-  { icon: 'braces', label: 'React · TypeScript · Go' },
+  { icon: 'server', label: 'Node.js' },
+  { icon: 'leaf', label: 'MongoDB' },
+  { icon: 'sparkles', label: 'AI features' },
+  { icon: 'atom', label: 'React' },
+  { icon: 'braces', label: 'TypeScript' },
+  { icon: 'database', label: 'PostgreSQL' },
+  { icon: 'zap', label: 'Bun · Hono' },
+  { icon: 'gauge', label: 'Go' },
+  { icon: 'route', label: 'Express' },
+  { icon: 'layers', label: 'Redis' },
 ] as const;
 
 export const stats = [

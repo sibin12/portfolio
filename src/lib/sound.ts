@@ -87,6 +87,26 @@ export const sound = {
     });
   },
 
+  /** A short wooden "tok" for a thrown chip hitting a wall. `strength` is 0 to 1. */
+  bounce(strength = 1) {
+    if (!enabled) return;
+    const ac = context();
+    if (!ac || !master) return;
+    const t = ac.currentTime;
+    const pitch = 620 + Math.random() * 260;
+    const osc = ac.createOscillator();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(pitch, t);
+    osc.frequency.exponentialRampToValueAtTime(pitch * 0.55, t + 0.07);
+    const gain = ac.createGain();
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.exponentialRampToValueAtTime(0.05 + 0.13 * Math.min(1, strength), t + 0.005);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
+    osc.connect(gain).connect(master);
+    osc.start(t);
+    osc.stop(t + 0.1);
+  },
+
   /** A soft low tap for when the two halves of the cut snap back together. */
   snap() {
     if (!enabled) return;

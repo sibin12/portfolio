@@ -1,26 +1,51 @@
-import { ArrowRight, Braces, Database, Github, Linkedin, Mail, MapPin, Server, Sparkles } from 'lucide-react';
+import {
+  ArrowRight,
+  Atom,
+  Braces,
+  Database,
+  Gauge,
+  Github,
+  Layers,
+  Leaf,
+  Linkedin,
+  Mail,
+  MapPin,
+  Route,
+  Server,
+  Sparkles,
+  Zap,
+} from 'lucide-react';
 import React from 'react';
 import { heroChips, profile } from '../../data/profile';
-import { cn } from '../../lib/utils';
 import profileImg from '../../public/assets/images/profile.jpeg';
+import { BounceField, type BounceItem } from '../ui/BounceField';
 import { ButtonLink, IconLink } from '../ui/Button';
 import { Reveal } from '../ui/Reveal';
 
-const chipIcons = { server: Server, database: Database, sparkles: Sparkles, braces: Braces };
+// Each chip borrows its tool's brand colour. Full class strings so Tailwind's scanner keeps them.
+const chipLooks = {
+  server: { Icon: Server, badge: 'bg-emerald-500/15 text-emerald-300', color: '#34d399' },
+  leaf: { Icon: Leaf, badge: 'bg-lime-500/15 text-lime-300', color: '#a3e635' },
+  sparkles: { Icon: Sparkles, badge: 'bg-violet-500/15 text-violet-300', color: '#a78bfa' },
+  atom: { Icon: Atom, badge: 'bg-sky-500/15 text-sky-300', color: '#38bdf8' },
+  braces: { Icon: Braces, badge: 'bg-blue-500/15 text-blue-300', color: '#60a5fa' },
+  database: { Icon: Database, badge: 'bg-indigo-500/15 text-indigo-300', color: '#818cf8' },
+  zap: { Icon: Zap, badge: 'bg-amber-500/15 text-amber-200', color: '#fbbf24' },
+  gauge: { Icon: Gauge, badge: 'bg-cyan-500/15 text-cyan-300', color: '#22d3ee' },
+  route: { Icon: Route, badge: 'bg-slate-400/15 text-slate-200', color: '#cbd5e1' },
+  layers: { Icon: Layers, badge: 'bg-rose-500/15 text-rose-300', color: '#fb7185' },
+};
 
-// Corners around the portrait, staggered so the chips never bob in sync.
-const chipPlaces = [
-  { position: '-left-8 top-10', tint: 'bg-emerald-500/15 text-emerald-300' },
-  { position: '-right-8 top-32 [animation-delay:-1.5s]', tint: 'bg-sky-500/15 text-sky-300' },
-  { position: '-left-10 bottom-32 [animation-delay:-3s]', tint: 'bg-violet-500/15 text-violet-300' },
-  { position: '-right-6 bottom-10 [animation-delay:-4.5s]', tint: 'bg-indigo-500/15 text-indigo-300' },
-];
+const chips: BounceItem[] = heroChips.map(({ icon, label }) => {
+  const { Icon, badge, color } = chipLooks[icon];
+  return { label, badge, color, icon: <Icon size={13} /> };
+});
 
-const Portrait: React.FC = () => (
-  <div className="relative mx-auto aspect-[4/5] w-full max-w-[380px] lg:max-w-[420px]">
+const HeroVisual: React.FC = () => (
+  <div className="relative mx-auto flex w-full max-w-[520px] flex-col gap-3 sm:flex-row lg:max-w-none">
     <div aria-hidden className="absolute -inset-8 rounded-[3rem] bg-gradient-to-br from-indigo-500/30 via-sky-400/10 to-emerald-400/25 blur-3xl" />
 
-    <div className="surface relative h-full overflow-hidden rounded-[2rem] p-2">
+    <div className="surface relative aspect-[4/5] overflow-hidden rounded-[2rem] p-2 sm:w-[60%] sm:shrink-0 lg:aspect-[2/3]">
       <img
         src={profileImg}
         alt={`Portrait of ${profile.name}`}
@@ -29,32 +54,20 @@ const Portrait: React.FC = () => (
         className="h-full w-full rounded-[1.6rem] object-cover object-[50%_30%]"
       />
       <div aria-hidden className="pointer-events-none absolute inset-2 rounded-[1.6rem] bg-gradient-to-t from-ink-950/80 via-ink-950/0 to-transparent" />
-      <div className="absolute inset-x-6 bottom-6">
+      <div className="absolute inset-x-5 bottom-5 lg:inset-x-4 xl:inset-x-5">
         <p className="font-display text-lg font-semibold text-white">{profile.name}</p>
-        <p className="text-xs text-slate-300">
+        <p className="text-xs text-slate-300 lg:text-[11px] xl:text-xs">
           {profile.role} · {profile.company}
         </p>
       </div>
     </div>
 
-    {heroChips.map((chip, index) => {
-      const Icon = chipIcons[chip.icon];
-      const place = chipPlaces[index % chipPlaces.length];
-      return (
-        <div
-          key={chip.label}
-          className={cn(
-            'surface absolute hidden animate-float items-center gap-2.5 whitespace-nowrap rounded-2xl bg-ink-900/85 px-3.5 py-2.5 text-xs font-medium text-slate-200 sm:flex',
-            place.position,
-          )}
-        >
-          <span className={cn('grid h-7 w-7 place-items-center rounded-lg', place.tint)}>
-            <Icon size={14} />
-          </span>
-          {chip.label}
-        </div>
-      );
-    })}
+    <BounceField items={chips} label="Tools I use most" className="surface h-44 rounded-[2rem] sm:h-auto sm:flex-1">
+      <div aria-hidden className="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.07)_1px,transparent_1px)] bg-[size:14px_14px] [mask-image:linear-gradient(to_bottom,black,transparent)]" />
+      <p aria-hidden className="pointer-events-none absolute inset-x-0 bottom-4 text-center font-mono text-[10px] uppercase tracking-[0.2em] text-white/25">
+        Flick a chip
+      </p>
+    </BounceField>
   </div>
 );
 
@@ -111,7 +124,7 @@ export const Hero: React.FC = () => (
       </div>
 
       <Reveal delay={0.1}>
-        <Portrait />
+        <HeroVisual />
       </Reveal>
     </div>
   </section>
