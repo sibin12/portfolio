@@ -5,6 +5,7 @@ import { navLinks, profile } from '../../data/profile';
 import { useActiveSection } from '../../hooks/useActiveSection';
 import { sound } from '../../lib/sound';
 import { cn } from '../../lib/utils';
+import { resume } from '../../data/resume';
 import { ButtonLink } from '../ui/Button';
 
 const sectionIds = navLinks.map((link) => link.href.slice(1));
@@ -27,6 +28,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onReplay }) => {
     sound.slice();
   };
 
+  // Escape closes the mobile menu, as keyboard users expect.
+  useEffect(() => {
+    if (!open) return undefined;
+    const onKey = (event: KeyboardEvent) => event.key === 'Escape' && setOpen(false);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open]);
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
     onScroll();
@@ -39,7 +48,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onReplay }) => {
       <nav
         aria-label="Main"
         className={cn(
-          'mx-auto flex max-w-6xl items-center justify-between rounded-full border py-2 pl-5 pr-2 transition-all duration-500',
+          'mx-auto flex max-w-6xl items-center justify-between rounded-full border py-2 pl-5 pr-2 transition-[background-color,border-color,box-shadow] duration-500',
           scrolled || open
             ? 'border-white/[0.08] bg-ink-900/70 shadow-soft backdrop-blur-xl'
             : 'border-transparent bg-transparent',
@@ -68,7 +77,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onReplay }) => {
                   href={link.href}
                   aria-current={isActive ? 'true' : undefined}
                   className={cn(
-                    'relative isolate block rounded-full px-4 py-2 text-sm font-medium transition-colors duration-300',
+                    'relative isolate block rounded-full px-3.5 py-2 text-sm font-medium transition-colors duration-300 lg:px-4',
                     isActive ? 'text-white' : 'text-slate-400 hover:text-white',
                   )}
                 >
@@ -100,7 +109,16 @@ export const Navbar: React.FC<NavbarProps> = ({ onReplay }) => {
           >
             {soundOn ? <Volume2 size={17} /> : <VolumeX size={17} />}
           </button>
-          <ButtonLink href={`mailto:${profile.email}`} className="hidden h-9 px-4 text-[13px] sm:inline-flex">
+          {resume.url && (
+            <a
+              href={resume.url}
+              download={resume.fileName}
+              className="hidden rounded-full px-3 py-2 text-sm font-medium text-slate-300 transition-colors hover:text-white lg:inline-block"
+            >
+              Resume
+            </a>
+          )}
+          <ButtonLink href="#contact" className="hidden h-9 px-4 text-[13px] sm:inline-flex">
             Let&apos;s talk
           </ButtonLink>
           <button
@@ -124,7 +142,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onReplay }) => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.98 }}
             transition={{ duration: 0.2 }}
-            className="surface mx-auto mt-2 max-w-6xl p-2 md:hidden"
+            className="surface mx-auto mt-2 max-w-6xl bg-ink-900/90 p-2 backdrop-blur-xl md:hidden"
           >
             {navLinks.map((link) => (
               <a
@@ -136,6 +154,16 @@ export const Navbar: React.FC<NavbarProps> = ({ onReplay }) => {
                 {link.label}
               </a>
             ))}
+            {resume.url && (
+              <a
+                href={resume.url}
+                download={resume.fileName}
+                onClick={() => setOpen(false)}
+                className="block rounded-2xl px-4 py-3 text-sm font-medium text-slate-300 transition-colors hover:bg-white/[0.05] hover:text-white"
+              >
+                Download Resume
+              </a>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

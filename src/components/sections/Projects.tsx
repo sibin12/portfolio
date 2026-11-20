@@ -1,6 +1,22 @@
-import { ArrowUpRight, Github, Lock } from 'lucide-react';
-import React from 'react';
-import { archiveProjects, featuredProjects, type Accent, type Project } from '../../data/profile';
+import { LayoutGroup, motion, useReducedMotion, type Variants } from 'framer-motion';
+import {
+  ArrowDown,
+  ArrowLeft,
+  ArrowUpRight,
+  BookOpen,
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  CircleDot,
+  Github,
+  Globe,
+  Layers,
+  LayoutTemplate,
+  Lock,
+  Server,
+} from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { archiveProjects, featuredProjects, type Accent, type Project, type Relation } from '../../data/profile';
 import { cn } from '../../lib/utils';
 import { GlassCard } from '../ui/GlassCard';
 import { Reveal } from '../ui/Reveal';
@@ -8,139 +24,536 @@ import { Section } from '../ui/Section';
 import { Tag } from '../ui/Tag';
 
 // Full class strings so Tailwind's scanner keeps them.
-const accents: Record<Accent, { field: string; orb: string; text: string }> = {
-  indigo: { field: 'from-indigo-500/30 via-indigo-500/5', orb: 'bg-indigo-400/50', text: 'text-indigo-300' },
-  emerald: { field: 'from-emerald-500/25 via-emerald-500/5', orb: 'bg-emerald-400/45', text: 'text-emerald-300' },
-  amber: { field: 'from-amber-500/25 via-amber-500/5', orb: 'bg-amber-300/45', text: 'text-amber-200' },
-  sky: { field: 'from-sky-500/25 via-sky-500/5', orb: 'bg-sky-400/45', text: 'text-sky-300' },
-  rose: { field: 'from-rose-500/25 via-rose-500/5', orb: 'bg-rose-400/45', text: 'text-rose-300' },
-  violet: { field: 'from-violet-500/30 via-violet-500/5', orb: 'bg-violet-400/50', text: 'text-violet-300' },
+const accents: Record<Accent, { text: string; field: string }> = {
+  indigo: { text: 'text-indigo-300', field: 'from-indigo-500/30' },
+  emerald: { text: 'text-emerald-300', field: 'from-emerald-500/25' },
+  amber: { text: 'text-amber-200', field: 'from-amber-500/25' },
+  sky: { text: 'text-sky-300', field: 'from-sky-500/25' },
+  rose: { text: 'text-rose-300', field: 'from-rose-500/25' },
+  violet: { text: 'text-violet-300', field: 'from-violet-500/30' },
 };
 
-const initials = (name: string) =>
-  name
-    .split(' ')
-    .map((word) => word[0])
-    .join('')
-    .slice(0, 2);
+const statusDot: Record<Project['status'], string> = {
+  Live: 'bg-emerald-400',
+  Completed: 'bg-indigo-300',
+  'In progress': 'bg-amber-300',
+};
+
+const statusText: Record<Project['status'], string> = {
+  Live: 'text-emerald-400',
+  Completed: 'text-indigo-300',
+  'In progress': 'text-amber-300',
+};
+
+const focusIcon = { Backend: Server, 'Full-stack': Layers, Frontend: LayoutTemplate };
+
+const spring = { type: 'spring', stiffness: 220, damping: 28 } as const;
+const total = featuredProjects.length;
+
+/* ------------------------------------------------------------------ card */
+
+/** A compact entity-relationship view: one row per relation, cardinality on the connector. */
+const ModelDiagram: React.FC<{ relations: Relation[]; compact?: boolean }> = ({ relations, compact }) => {
+  const pill = cn(
+    'truncate rounded-md border border-white/10 bg-ink-950/85 font-mono text-slate-100',
+    compact ? 'px-1.5 py-0.5 text-[10px]' : 'px-2 py-1 text-[11.5px]',
+  );
+  return (
+    <figure>
+      {!compact && <figcaption className="mb-3 font-mono text-[10px] uppercase tracking-[0.2em] text-slate-300/80">Data model</figcaption>}
+      <ul className={compact ? 'space-y-1.5' : 'space-y-2.5'}>
+        {relations.map((relation) => (
+          <li key={`${relation.from}-${relation.to}`} className="grid grid-cols-[minmax(0,auto)_1fr_minmax(0,auto)] items-center gap-1.5">
+            <span className={pill}>{relation.from}</span>
+            <span className="relative flex min-w-[40px] items-center">
+              <span aria-hidden className="h-px w-full bg-gradient-to-r from-white/25 via-indigo-300/50 to-white/25" />
+              <span
+                className={cn(
+                  'absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded bg-ink-900 px-1 font-mono font-medium text-indigo-200',
+                  compact ? 'text-[9px]' : 'text-[10px]',
+                )}
+              >
+                {relation.kind}
+                {!compact && relation.note && <span className="hidden font-normal text-slate-400 sm:inline"> · {relation.note}</span>}
+              </span>
+            </span>
+            <span className={pill}>{relation.to}</span>
+          </li>
+        ))}
+      </ul>
+    </figure>
+  );
+};
 
 const StatusBadge: React.FC<{ status: Project['status'] }> = ({ status }) => (
-  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-ink-950/60 px-2.5 py-1 text-[11px] font-medium text-slate-200 backdrop-blur">
-    <span className={cn('h-1.5 w-1.5 rounded-full', status === 'Live' ? 'bg-emerald-400' : 'bg-amber-300')} />
+  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-ink-950/75 px-2.5 py-1 text-[11px] font-medium text-slate-100 backdrop-blur">
+    <span aria-hidden className={cn('h-1.5 w-1.5 rounded-full', statusDot[status])} />
     {status}
   </span>
 );
 
-const ProjectCard: React.FC<{ project: Project }> = ({ project }) => {
-  const accent = accents[project.accent];
+/** The project as a card: screenshot or data model as the artwork, name and tagline printed on it. */
+const CardFace: React.FC<{ project: Project; large?: boolean }> = ({ project, large }) => {
+  const { visual } = project;
+  return (
+    <div
+      className={cn(
+        'relative aspect-[1.6/1] w-full overflow-hidden border border-white/[0.12] bg-ink-900 shadow-[0_30px_70px_-28px_rgba(0,0,0,0.95)]',
+        large ? 'rounded-[1.6rem]' : 'rounded-[1.25rem]',
+      )}
+    >
+      {visual.kind === 'screenshot' ? (
+        <>
+          <img
+            src={visual.image}
+            alt={visual.alt}
+            width={960}
+            height={540}
+            loading="lazy"
+            decoding="async"
+            className="absolute inset-0 h-full w-full object-cover object-top"
+          />
+          <div aria-hidden className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-ink-950 via-ink-950/70 to-transparent" />
+        </>
+      ) : (
+        <>
+          <div aria-hidden className={cn('absolute inset-0 bg-gradient-to-br via-ink-900/60 to-ink-900', accents[project.accent].field)} />
+          <div aria-hidden className="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.07)_1px,transparent_1px)] bg-[size:14px_14px]" />
+          <div className={cn('absolute inset-x-4', large ? 'top-14 sm:inset-x-6' : 'top-11')}>
+            <ModelDiagram relations={visual.relations} compact={!large} />
+          </div>
+          <div aria-hidden className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-ink-950 to-transparent" />
+        </>
+      )}
+
+      {/* A soft sheen, like light across a real card. */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/[0.09] via-transparent to-transparent" />
+
+      <div className="absolute inset-x-3 top-3 flex items-center justify-between gap-2">
+        <StatusBadge status={project.status} />
+        <span className="rounded-full bg-ink-950/60 px-2 py-0.5 font-mono text-[11px] text-slate-300 backdrop-blur">{project.year}</span>
+      </div>
+
+      <div className={cn('absolute inset-x-4', large ? 'bottom-4 sm:inset-x-6 sm:bottom-5' : 'bottom-3.5')}>
+        <p className={cn('font-display font-semibold tracking-tight text-white', large ? 'text-lg sm:text-2xl' : 'text-lg')}>{project.name}</p>
+        <p className={cn('truncate text-slate-300', large ? 'text-xs sm:text-sm' : 'text-xs')}>{project.tagline}</p>
+      </div>
+    </div>
+  );
+};
+
+/* ------------------------------------------------------------------ grid */
+
+interface GridProps {
+  onOpen: (index: number) => void;
+  buttonRefs: React.MutableRefObject<(HTMLButtonElement | null)[]>;
+}
+
+const ProjectGrid: React.FC<GridProps> = ({ onOpen, buttonRefs }) => (
+  <ul className="grid gap-x-5 gap-y-9 sm:grid-cols-2 lg:grid-cols-3">
+    {featuredProjects.map((project, index) => (
+      <motion.li
+        key={project.name}
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true, margin: '-40px' }}
+        transition={{ duration: 0.5, delay: (index % 3) * 0.06 }}
+      >
+        <button
+          ref={(el) => (buttonRefs.current[index] = el)}
+          type="button"
+          onClick={() => onOpen(index)}
+          aria-controls="project-detail"
+          className="group block w-full rounded-[1.4rem] text-left"
+        >
+          <motion.div layoutId={`card-${project.name}`} transition={spring} className="relative z-10">
+            <div className="transition duration-300 group-hover:-translate-y-1.5 group-focus-visible:-translate-y-1.5">
+              <CardFace project={project} />
+            </div>
+          </motion.div>
+          <span className="mt-3.5 flex items-center justify-between gap-3 px-1">
+            <span className="truncate text-[13px] text-slate-400">
+              <span className="text-slate-300">{project.focus}</span> · {project.stack.slice(0, 3).join(', ')}
+            </span>
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] py-1.5 pl-3 pr-2 text-xs font-medium text-slate-100 transition group-hover:border-white/25 group-hover:bg-white/[0.08]">
+              View details
+              <ChevronRight size={14} aria-hidden className="transition-transform group-hover:translate-x-0.5" />
+            </span>
+          </span>
+        </button>
+      </motion.li>
+    ))}
+  </ul>
+);
+
+/* ------------------------------------------------------------------ detail */
+
+interface TileProps {
+  icon: React.ReactNode;
+  label: string;
+  caption: string;
+  href?: string;
+  onClick?: () => void;
+  /** Greyed out, like an action a wallet card doesn't support. */
+  disabled?: boolean;
+}
+
+/** Round action tile, like the controls that appear beside a card in a wallet app. */
+const Tile: React.FC<TileProps> = ({ icon, label, caption, href, onClick, disabled }) => {
+  const interactive = !disabled && (href || onClick);
+  const body = (
+    <>
+      <span
+        className={cn(
+          'grid h-12 w-12 place-items-center rounded-full border shadow-[0_10px_30px_-12px_rgba(0,0,0,0.8)] transition duration-300 sm:h-14 sm:w-14',
+          disabled ? 'border-white/[0.06] bg-transparent text-slate-600' : 'border-white/[0.12] bg-white/[0.04] text-slate-100',
+          interactive && 'group-hover:-translate-y-0.5 group-hover:border-white/30 group-hover:bg-white/[0.09]',
+        )}
+      >
+        {icon}
+      </span>
+      <span className={cn('mt-2 text-[12.5px] font-medium leading-tight', disabled ? 'text-slate-500' : 'text-slate-100')}>{label}</span>
+      <span className={cn('mt-0.5 text-[11px] leading-tight', disabled ? 'text-slate-600' : 'text-slate-400')}>{caption}</span>
+    </>
+  );
+  const className = 'group flex w-full flex-col items-center rounded-2xl px-1 py-1 text-center';
+  if (disabled) return <div className={className}>{body}</div>;
+  if (href)
+    return (
+      <a href={href} target="_blank" rel="noreferrer" className={className}>
+        {body}
+        <span className="sr-only"> (opens in a new tab)</span>
+      </a>
+    );
+  if (onClick)
+    return (
+      <button type="button" onClick={onClick} className={className}>
+        {body}
+      </button>
+    );
+  return <div className={className}>{body}</div>;
+};
+
+/** Always six tiles, so the grid stays even; links a project doesn't have are shown greyed out. */
+const tilesFor = (project: Project, showDetails: () => void): TileProps[] => {
+  const FocusIcon = focusIcon[project.focus];
+  const { live, code, docs } = project.links;
+  const inProgress = project.status === 'In progress';
+  return [
+    live
+      ? { icon: <Globe size={20} aria-hidden />, label: 'Live demo', caption: 'Open the site', href: live }
+      : { icon: <Globe size={20} aria-hidden />, label: 'Live demo', caption: inProgress ? 'Not deployed yet' : 'Not hosted now', disabled: true },
+    code
+      ? { icon: <Github size={20} aria-hidden />, label: 'Source code', caption: 'On GitHub', href: code }
+      : { icon: <Lock size={19} aria-hidden />, label: 'Source code', caption: 'Private for now', disabled: true },
+    docs
+      ? { icon: <BookOpen size={20} aria-hidden />, label: 'API docs', caption: 'Postman', href: docs }
+      : { icon: <ArrowDown size={20} aria-hidden />, label: 'Details', caption: 'Problem & build', onClick: showDetails },
+    { icon: <CircleDot size={20} aria-hidden className={statusText[project.status]} />, label: project.status, caption: 'Status' },
+    { icon: <FocusIcon size={20} aria-hidden />, label: project.focus, caption: 'Focus' },
+    { icon: <CalendarDays size={20} aria-hidden />, label: project.year, caption: 'Year' },
+  ];
+};
+
+const tileList: Variants = { show: { transition: { staggerChildren: 0.05, delayChildren: 0.3 } } };
+const tileItem: Variants = { hidden: { opacity: 0, x: 28 }, show: { opacity: 1, x: 0, transition: spring } };
+
+interface DetailProps {
+  index: number;
+  /** The project opened from the grid: only its card flies in from the grid. */
+  entry: string;
+  onClose: () => void;
+  onSelect: (index: number) => void;
+}
+
+const ProjectDetail = React.forwardRef<HTMLDivElement, DetailProps>(({ index, entry, onClose, onSelect }, ref) => {
+  const project = featuredProjects[index];
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const firstCard = useRef(true);
+  const reduce = useReducedMotion();
+
+  useEffect(() => {
+    firstCard.current = false;
+  }, []);
+
+  // On open, and whenever a switch removes the focused element, put focus on the project heading.
+  useEffect(() => {
+    const region = document.getElementById('project-detail');
+    const focused = document.activeElement;
+    if (!region?.contains(focused) || focused === document.body) headingRef.current?.focus({ preventScroll: true });
+  }, [index]);
+
+  // Escape goes back, arrow keys switch projects, while focus is in the detail view (or nowhere in particular).
+  const step = (delta: number) => onSelect((index + delta + total) % total);
+  const keys = useRef({ step, onClose });
+  keys.current = { step, onClose };
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      const region = document.getElementById('project-detail');
+      const focused = document.activeElement;
+      if (focused && focused !== document.body && !region?.contains(focused)) return;
+      if (event.key === 'Escape') keys.current.onClose();
+      else if (event.key === 'ArrowRight') keys.current.step(1);
+      else if (event.key === 'ArrowLeft') keys.current.step(-1);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, []);
+
+  const showDetails = () => headingRef.current?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+
+  // The card flies in from the grid on open; after that, switching projects slides the next card in from the right.
+  const cardInitial = firstCard.current ? { rotateY: 0, x: '0%' } : { rotateY: 0, x: '45%', opacity: 0 };
 
   return (
-    <GlassCard className="flex h-full flex-col p-2">
-      <div className={cn('relative h-36 overflow-hidden rounded-[1.25rem] bg-gradient-to-br to-transparent', accent.field)}>
-        <div aria-hidden className="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.09)_1px,transparent_1px)] bg-[size:14px_14px] [mask-image:linear-gradient(to_bottom,black,transparent)]" />
-        <div aria-hidden className={cn('absolute -right-8 -top-10 h-36 w-36 rounded-full blur-2xl transition-transform duration-700 group-hover/card:scale-125', accent.orb)} />
-        <div aria-hidden className="absolute -right-4 -top-4 h-28 w-28 rounded-full border border-white/10" />
-        <div aria-hidden className="absolute -right-10 -top-10 h-40 w-40 rounded-full border border-white/[0.06]" />
-        <span aria-hidden className="absolute bottom-3 left-4 font-display text-5xl font-bold tracking-tighter text-white/[0.12]">
-          {initials(project.name)}
-        </span>
-        <div className="absolute inset-x-3 top-3 flex items-center justify-between">
-          <StatusBadge status={project.status} />
-          <span className="font-mono text-[11px] text-white/50">{project.year}</span>
+    <div ref={ref} id="project-detail" role="region" aria-labelledby="project-detail-title">
+      <div className="flex items-center justify-between gap-4">
+        <button
+          type="button"
+          onClick={onClose}
+          className="inline-flex h-10 items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 text-sm font-medium text-slate-100 transition hover:border-white/25 hover:bg-white/[0.08]"
+        >
+          <ArrowLeft size={15} aria-hidden />
+          All projects
+        </button>
+        <div className="flex items-center gap-2">
+          <span className="mr-1 font-mono text-xs text-slate-400" aria-live="polite">
+            {index + 1} / {total}
+          </span>
+          <button
+            type="button"
+            onClick={() => step(-1)}
+            aria-label="Previous project"
+            className="grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[0.04] text-slate-200 transition hover:border-white/25 hover:bg-white/[0.08]"
+          >
+            <ChevronLeft size={17} aria-hidden />
+          </button>
+          <button
+            type="button"
+            onClick={() => step(1)}
+            aria-label="Next project"
+            className="grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[0.04] text-slate-200 transition hover:border-white/25 hover:bg-white/[0.08]"
+          >
+            <ChevronRight size={17} aria-hidden />
+          </button>
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col px-4 pb-4 pt-5">
-        <h3 className="font-display text-xl font-semibold tracking-tight text-white">{project.name}</h3>
-        <p className={cn('mt-1 text-sm', accent.text)}>{project.tagline}</p>
-        <p className="mt-4 text-sm leading-relaxed text-slate-400">{project.description}</p>
+      {/* Stage: the card swings left, the tiles slide in beside it. */}
+      <div className="relative mt-8 grid grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] items-center gap-3 sm:gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+        <div className="relative">
+          <motion.div
+            key={project.name}
+            layoutId={project.name === entry ? `card-${project.name}` : undefined}
+            transition={spring}
+            className="relative z-10 -ml-[42%] w-[142%] sm:-ml-[14%] sm:w-[114%] lg:-ml-[7%] lg:w-[107%]"
+          >
+            <motion.div
+              initial={cardInitial}
+              animate={{ rotateY: reduce ? 0 : -16, x: '0%', opacity: 1, transformPerspective: 1300 }}
+              transition={{ ...spring, delay: firstCard.current ? 0.3 : 0 }}
+            >
+              <CardFace project={project} large />
+            </motion.div>
+          </motion.div>
+        </div>
 
-        <div className="mt-5 flex flex-wrap gap-1.5">
+        <motion.ul key={project.name} variants={tileList} initial="hidden" animate="show" className="grid grid-cols-2 gap-x-1 gap-y-5 sm:gap-x-4 lg:grid-cols-3">
+          {tilesFor(project, showDetails).map((tile) => (
+            <motion.li key={tile.label} variants={tileItem}>
+              <Tile {...tile} />
+            </motion.li>
+          ))}
+        </motion.ul>
+      </div>
+
+      {/* Picker, like the card strip at the bottom of a wallet app. */}
+      <div className="mt-10 flex items-center gap-2.5 overflow-x-auto rounded-2xl border border-white/[0.07] bg-white/[0.025] p-2.5 [scrollbar-width:none]">
+        <button
+          type="button"
+          onClick={onClose}
+          className="shrink-0 rounded-lg px-3 py-2 font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-200 transition hover:bg-white/[0.06]"
+        >
+          All ({total})
+        </button>
+        {featuredProjects.map((item, i) => (
+          <button
+            key={item.name}
+            type="button"
+            onClick={() => onSelect(i)}
+            aria-label={`Show ${item.name}`}
+            aria-current={i === index ? 'true' : undefined}
+            className={cn(
+              'relative h-11 w-[74px] shrink-0 overflow-hidden rounded-lg border transition duration-300',
+              i === index ? 'border-white/70 opacity-100 shadow-[0_0_0_3px_rgba(165,180,252,0.25)]' : 'border-white/10 opacity-60 hover:opacity-100',
+            )}
+          >
+            {item.visual.kind === 'screenshot' ? (
+              <img src={item.visual.image} alt="" loading="lazy" className="h-full w-full object-cover object-top" />
+            ) : (
+              <span className={cn('grid h-full w-full place-items-center bg-gradient-to-br to-ink-900 font-display text-sm font-bold text-white/80', accents[item.accent].field)}>
+                {item.name
+                  .split(' ')
+                  .map((word) => word[0])
+                  .join('')
+                  .slice(0, 2)}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Full details. */}
+      <motion.div key={project.name} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, delay: 0.15 }} className="mt-10">
+        <h3 id="project-detail-title" ref={headingRef} tabIndex={-1} className="font-display text-2xl font-semibold tracking-tight text-white outline-none focus-visible:ring-0 focus-visible:ring-offset-0 md:text-3xl">
+          {project.name}
+        </h3>
+        <p className={cn('mt-1 text-sm md:text-base', accents[project.accent].text)}>{project.tagline}</p>
+
+        <dl className="mt-6 grid gap-4 md:grid-cols-2">
+          <div className="rounded-2xl border border-white/[0.07] bg-white/[0.025] p-5 md:p-6">
+            <dt className="eyebrow">Problem</dt>
+            <dd className="mt-3 text-[15px] leading-relaxed text-slate-300">{project.problem}</dd>
+          </div>
+          <div className="rounded-2xl border border-white/[0.07] bg-white/[0.025] p-5 md:p-6">
+            <dt className="eyebrow">What I built</dt>
+            <dd className="mt-3 text-[15px] leading-relaxed text-slate-300">{project.built}</dd>
+          </div>
+        </dl>
+
+        <h4 className="eyebrow mt-9">Key features</h4>
+        <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+          {project.features.map((feature) => (
+            <li key={feature.label} className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 md:p-5">
+              <p className="text-sm font-semibold text-white">{feature.label}</p>
+              <p className="mt-1.5 text-sm leading-relaxed text-slate-400">{feature.text}</p>
+            </li>
+          ))}
+        </ul>
+
+        <div className="mt-7 flex flex-wrap gap-1.5">
+          <span className="sr-only">Technologies: </span>
           {project.stack.map((tech) => (
             <Tag key={tech}>{tech}</Tag>
           ))}
         </div>
-
-        <div className="mt-auto flex items-center gap-5 pt-6 text-sm font-medium">
-          {project.live && (
-            <a href={project.live} target="_blank" rel="noreferrer" className="group/link inline-flex items-center gap-1 text-white transition-colors hover:text-indigo-200">
-              Live site
-              <ArrowUpRight size={15} className="transition-transform group-hover/link:-translate-y-0.5 group-hover/link:translate-x-0.5" />
-            </a>
-          )}
-          {project.code && (
-            <a href={project.code} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-slate-400 transition-colors hover:text-white">
-              <Github size={14} />
-              Source
-            </a>
-          )}
-          {!project.live && !project.code && (
-            <span className="inline-flex items-center gap-1.5 text-slate-500">
-              <Lock size={13} />
-              Private while in progress
-            </span>
-          )}
-        </div>
-      </div>
-    </GlassCard>
+      </motion.div>
+    </div>
   );
-};
+});
+ProjectDetail.displayName = 'ProjectDetail';
 
-export const Projects: React.FC = () => (
-  <Section
-    id="work"
-    eyebrow="Selected work"
-    title={
-      <>
-        Things I&apos;ve <span className="text-gradient">built lately.</span>
-      </>
-    }
-    description="Personal projects from this year, from games you can play right now to full-stack apps still in progress."
-  >
-    <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-      {featuredProjects.map((project, index) => (
-        <Reveal key={project.name} delay={(index % 3) * 0.06}>
-          <ProjectCard project={project} />
-        </Reveal>
-      ))}
+/* ------------------------------------------------------------------ archive */
+
+const Archive: React.FC = () => (
+  <Reveal className="mt-24">
+    <div className="mb-6 flex items-end justify-between gap-4">
+      <div>
+        <p className="eyebrow">Archive</p>
+        <h3 className="mt-3 font-display text-2xl font-semibold tracking-tight text-white">More projects</h3>
+      </div>
+      <a
+        href="https://github.com/sibin12?tab=repositories"
+        target="_blank"
+        rel="noreferrer"
+        className="inline-flex items-center gap-1 text-sm text-slate-400 transition-colors hover:text-white"
+      >
+        All repositories
+        <ArrowUpRight size={15} aria-hidden />
+      </a>
     </div>
 
-    <Reveal className="mt-20">
-      <div className="mb-6 flex items-end justify-between gap-4">
-        <div>
-          <p className="eyebrow">Archive</p>
-          <h3 className="mt-3 font-display text-2xl font-semibold tracking-tight text-white">Where I started</h3>
-        </div>
-        <a href="https://github.com/sibin12?tab=repositories" target="_blank" rel="noreferrer" className="hidden items-center gap-1 text-sm text-slate-400 transition-colors hover:text-white sm:inline-flex">
-          All repositories
-          <ArrowUpRight size={15} />
-        </a>
-      </div>
-
-      <GlassCard interactive={false} className="overflow-hidden p-0">
-        <ul className="divide-y divide-white/[0.05]">
-          {archiveProjects.map((project) => (
-            <li key={project.name}>
-              <a
-                href={project.code}
-                target="_blank"
-                rel="noreferrer"
-                className="group grid grid-cols-[1fr_auto] items-center gap-4 px-6 py-5 transition-colors hover:bg-white/[0.03] md:grid-cols-[180px_1fr_220px_60px_20px]"
-              >
-                <span className="font-medium text-white">{project.name}</span>
-                <span className="hidden text-sm text-slate-400 md:block">{project.description}</span>
-                <span className="hidden flex-wrap gap-1.5 md:flex">
-                  {project.stack.map((tech) => (
-                    <Tag key={tech}>{tech}</Tag>
-                  ))}
-                </span>
-                <span className="hidden font-mono text-xs text-slate-500 md:block">{project.year}</span>
-                <ArrowUpRight size={16} className="text-slate-500 transition-all group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-white" />
-              </a>
-            </li>
-          ))}
-        </ul>
-      </GlassCard>
-    </Reveal>
-  </Section>
+    <GlassCard interactive={false} className="overflow-hidden p-0">
+      <ul className="divide-y divide-white/[0.05]">
+        {archiveProjects.map((project) => (
+          <li
+            key={project.name}
+            className="grid gap-2 px-6 py-5 transition-colors hover:bg-white/[0.02] md:grid-cols-[150px_1fr_220px_48px_150px] md:items-center md:gap-4"
+          >
+            <span className="font-medium text-white">{project.name}</span>
+            <span className="text-sm text-slate-400">{project.description}</span>
+            <span className="hidden flex-wrap gap-1.5 md:flex">
+              {project.stack.map((tech) => (
+                <Tag key={tech}>{tech}</Tag>
+              ))}
+            </span>
+            <span className="hidden font-mono text-xs text-slate-400 md:block">{project.year}</span>
+            <span className="flex items-center gap-4 text-sm md:justify-end">
+              {project.live && (
+                <a href={project.live} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-slate-200 transition-colors hover:text-white">
+                  Live
+                  <ArrowUpRight size={14} aria-hidden />
+                  <span className="sr-only">: {project.name}</span>
+                </a>
+              )}
+              {project.code && (
+                <a href={project.code} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-slate-400 transition-colors hover:text-white">
+                  <Github size={14} aria-hidden />
+                  Code
+                  <span className="sr-only">: {project.name}</span>
+                </a>
+              )}
+              {project.note && <span className="text-xs text-amber-200/80">{project.note}</span>}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </GlassCard>
+  </Reveal>
 );
+
+/* ------------------------------------------------------------------ section */
+
+export const Projects: React.FC = () => {
+  const [active, setActive] = useState<number | null>(null);
+  const [entry, setEntry] = useState('');
+  const detailRef = useRef<HTMLDivElement>(null);
+  const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const closedFrom = useRef<number | null>(null);
+  const reduce = useReducedMotion();
+  const isOpen = active !== null;
+
+  const open = (index: number) => {
+    setEntry(featuredProjects[index].name);
+    setActive(index);
+  };
+  const close = () => {
+    closedFrom.current = active;
+    setActive(null);
+  };
+
+  // Keep the stage in view when it opens, and return to the card (and its focus) when it closes.
+  useEffect(() => {
+    const behavior = reduce ? 'auto' : 'smooth';
+    if (isOpen) {
+      detailRef.current?.scrollIntoView({ behavior, block: 'start' });
+    } else if (closedFrom.current !== null) {
+      const button = buttonRefs.current[closedFrom.current];
+      button?.focus({ preventScroll: true });
+      button?.scrollIntoView({ behavior, block: 'center' });
+      closedFrom.current = null;
+    }
+  }, [isOpen, reduce]);
+
+  return (
+    <Section
+      id="projects"
+      eyebrow="Projects"
+      title={
+        <>
+          Things I&apos;ve <span className="text-gradient">built.</span>
+        </>
+      }
+      description="Backend-heavy work first. Open a card to see the problem, what I built and the key technical decisions."
+    >
+      <LayoutGroup>
+        {active !== null ? (
+          <ProjectDetail ref={detailRef} index={active} entry={entry} onClose={close} onSelect={setActive} />
+        ) : (
+          <ProjectGrid onOpen={open} buttonRefs={buttonRefs} />
+        )}
+      </LayoutGroup>
+      <Archive />
+    </Section>
+  );
+};

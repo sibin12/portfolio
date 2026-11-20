@@ -25,21 +25,34 @@
     @apply outline-none ring-2 ring-indigo-400/70 ring-offset-2 ring-offset-ink-950;
   }
 
+  /* Visitors who ask for less motion get none: no smooth scroll, no looping or entrance animations. */
   @media (prefers-reduced-motion: reduce) {
     html {
       scroll-behavior: auto;
+    }
+
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
     }
   }
 }
 
 @layer components {
-  /* Elevated glass surface used by every card on the page. */
+  /*
+   * Elevated surface used by cards. It is a solid tint rather than frosted glass: the backdrop behind
+   * it is nearly flat, so blur added cost without changing the look. `isolate` keeps each card its own
+   * stacking context, so the hover spotlight (-z-10) stays inside the card.
+   */
   .surface {
-    @apply relative rounded-3xl border border-white/[0.07] bg-white/[0.025] shadow-soft backdrop-blur-xl;
+    @apply relative isolate rounded-3xl border border-white/[0.07] bg-white/[0.03] shadow-soft;
   }
 
   .surface-hover {
-    @apply transition duration-500 hover:-translate-y-0.5 hover:border-white/[0.14] hover:bg-white/[0.04];
+    @apply transition duration-300 hover:-translate-y-0.5 hover:border-white/[0.14] hover:bg-white/[0.045];
   }
 
   .text-gradient {

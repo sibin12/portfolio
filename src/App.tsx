@@ -6,7 +6,8 @@ import { Experience } from './components/sections/Experience';
 import { Hero } from './components/sections/Hero';
 import { Navbar } from './components/sections/Navbar';
 import { Projects } from './components/sections/Projects';
-import { Stack } from './components/sections/Stack';
+import { Services } from './components/sections/Services';
+import { Skills } from './components/sections/Skills';
 import { Backdrop } from './components/ui/Backdrop';
 import { Intro } from './components/ui/Intro';
 
@@ -62,13 +63,20 @@ const App: React.FC = () => {
         <>
           <Backdrop />
           <ScrollProgress />
+          <a
+            href="#main"
+            className="fixed left-4 top-4 z-[70] -translate-y-24 rounded-full bg-white px-4 py-2 text-sm font-semibold text-ink-950 transition-transform focus:translate-y-0"
+          >
+            Skip to content
+          </a>
           <Navbar onReplay={replay} />
-          <main className="relative z-10 overflow-x-clip">
+          <main id="main" tabIndex={-1} className="relative z-10 overflow-x-clip outline-none">
             <Hero />
             <About />
             <Experience />
             <Projects />
-            <Stack />
+            <Services />
+            <Skills />
             <Contact />
           </main>
           <div className="relative z-10">

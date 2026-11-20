@@ -27,7 +27,7 @@ export const GlassCard: React.FC<GlassCardProps> = ({ interactive = true, classN
       {...props}
     >
       {interactive && (
-        // .surface uses backdrop-filter, so it is its own stacking context and -z-10 stays inside the card.
+        // .surface is isolated, so it is its own stacking context and -z-10 stays inside the card.
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 -z-10 rounded-[inherit] opacity-0 transition-opacity duration-500 group-hover/card:opacity-100"
