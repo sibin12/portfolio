@@ -16,131 +16,21 @@ import {
   Server,
 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
-import { archiveProjects, featuredProjects, type Accent, type Project, type Relation } from '../../data/profile';
+import { archiveProjects, featuredProjects, type Project } from '../../data/profile';
 import { cn } from '../../lib/utils';
 import { GlassCard } from '../ui/GlassCard';
+import { accents, CardFace, statusText } from '../ui/ProjectCard';
 import { Reveal } from '../ui/Reveal';
 import { Section } from '../ui/Section';
 import { Tag } from '../ui/Tag';
-
-// Full class strings so Tailwind's scanner keeps them.
-const accents: Record<Accent, { text: string; field: string }> = {
-  indigo: { text: 'text-indigo-300', field: 'from-indigo-500/30' },
-  emerald: { text: 'text-emerald-300', field: 'from-emerald-500/25' },
-  amber: { text: 'text-amber-200', field: 'from-amber-500/25' },
-  sky: { text: 'text-sky-300', field: 'from-sky-500/25' },
-  rose: { text: 'text-rose-300', field: 'from-rose-500/25' },
-  violet: { text: 'text-violet-300', field: 'from-violet-500/30' },
-};
-
-const statusDot: Record<Project['status'], string> = {
-  Live: 'bg-emerald-400',
-  Completed: 'bg-indigo-300',
-  'In progress': 'bg-amber-300',
-};
-
-const statusText: Record<Project['status'], string> = {
-  Live: 'text-emerald-400',
-  Completed: 'text-indigo-300',
-  'In progress': 'text-amber-300',
-};
+import { ProjectShowcase } from './ProjectShowcase';
 
 const focusIcon = { Backend: Server, 'Full-stack': Layers, Frontend: LayoutTemplate };
 
 const spring = { type: 'spring', stiffness: 220, damping: 28 } as const;
 const total = featuredProjects.length;
-
-/* ------------------------------------------------------------------ card */
-
-/** A compact entity-relationship view: one row per relation, cardinality on the connector. */
-const ModelDiagram: React.FC<{ relations: Relation[]; compact?: boolean }> = ({ relations, compact }) => {
-  const pill = cn(
-    'truncate rounded-md border border-white/10 bg-ink-950/85 font-mono text-slate-100',
-    compact ? 'px-1.5 py-0.5 text-[10px]' : 'px-2 py-1 text-[11.5px]',
-  );
-  return (
-    <figure>
-      {!compact && <figcaption className="mb-3 font-mono text-[10px] uppercase tracking-[0.2em] text-slate-300/80">Data model</figcaption>}
-      <ul className={compact ? 'space-y-1.5' : 'space-y-2.5'}>
-        {relations.map((relation) => (
-          <li key={`${relation.from}-${relation.to}`} className="grid grid-cols-[minmax(0,auto)_1fr_minmax(0,auto)] items-center gap-1.5">
-            <span className={pill}>{relation.from}</span>
-            <span className="relative flex min-w-[40px] items-center">
-              <span aria-hidden className="h-px w-full bg-gradient-to-r from-white/25 via-indigo-300/50 to-white/25" />
-              <span
-                className={cn(
-                  'absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded bg-ink-900 px-1 font-mono font-medium text-indigo-200',
-                  compact ? 'text-[9px]' : 'text-[10px]',
-                )}
-              >
-                {relation.kind}
-                {!compact && relation.note && <span className="hidden font-normal text-slate-400 sm:inline"> · {relation.note}</span>}
-              </span>
-            </span>
-            <span className={pill}>{relation.to}</span>
-          </li>
-        ))}
-      </ul>
-    </figure>
-  );
-};
-
-const StatusBadge: React.FC<{ status: Project['status'] }> = ({ status }) => (
-  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-ink-950/75 px-2.5 py-1 text-[11px] font-medium text-slate-100 backdrop-blur">
-    <span aria-hidden className={cn('h-1.5 w-1.5 rounded-full', statusDot[status])} />
-    {status}
-  </span>
-);
-
-/** The project as a card: screenshot or data model as the artwork, name and tagline printed on it. */
-const CardFace: React.FC<{ project: Project; large?: boolean }> = ({ project, large }) => {
-  const { visual } = project;
-  return (
-    <div
-      className={cn(
-        'relative aspect-[1.6/1] w-full overflow-hidden border border-white/[0.12] bg-ink-900 shadow-[0_30px_70px_-28px_rgba(0,0,0,0.95)]',
-        large ? 'rounded-[1.6rem]' : 'rounded-[1.25rem]',
-      )}
-    >
-      {visual.kind === 'screenshot' ? (
-        <>
-          <img
-            src={visual.image}
-            alt={visual.alt}
-            width={960}
-            height={540}
-            loading="lazy"
-            decoding="async"
-            className="absolute inset-0 h-full w-full object-cover object-top"
-          />
-          <div aria-hidden className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-ink-950 via-ink-950/70 to-transparent" />
-        </>
-      ) : (
-        <>
-          <div aria-hidden className={cn('absolute inset-0 bg-gradient-to-br via-ink-900/60 to-ink-900', accents[project.accent].field)} />
-          <div aria-hidden className="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.07)_1px,transparent_1px)] bg-[size:14px_14px]" />
-          <div className={cn('absolute inset-x-4', large ? 'top-14 sm:inset-x-6' : 'top-11')}>
-            <ModelDiagram relations={visual.relations} compact={!large} />
-          </div>
-          <div aria-hidden className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-ink-950 to-transparent" />
-        </>
-      )}
-
-      {/* A soft sheen, like light across a real card. */}
-      <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/[0.09] via-transparent to-transparent" />
-
-      <div className="absolute inset-x-3 top-3 flex items-center justify-between gap-2">
-        <StatusBadge status={project.status} />
-        <span className="rounded-full bg-ink-950/60 px-2 py-0.5 font-mono text-[11px] text-slate-300 backdrop-blur">{project.year}</span>
-      </div>
-
-      <div className={cn('absolute inset-x-4', large ? 'bottom-4 sm:inset-x-6 sm:bottom-5' : 'bottom-3.5')}>
-        <p className={cn('font-display font-semibold tracking-tight text-white', large ? 'text-lg sm:text-2xl' : 'text-lg')}>{project.name}</p>
-        <p className={cn('truncate text-slate-300', large ? 'text-xs sm:text-sm' : 'text-xs')}>{project.tagline}</p>
-      </div>
-    </div>
-  );
-};
+/** How many of the top projects get the pinned scroll showcase; all of them stay in the grid below. */
+const SHOWCASE_COUNT = 3;
 
 /* ------------------------------------------------------------------ grid */
 
@@ -303,7 +193,7 @@ const ProjectDetail = React.forwardRef<HTMLDivElement, DetailProps>(({ index, en
   const showDetails = () => headingRef.current?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
 
   // The card flies in from the grid on open; after that, switching projects slides the next card in from the right.
-  const cardInitial = firstCard.current ? { rotateY: 0, x: '0%' } : { rotateY: 0, x: '45%', opacity: 0 };
+  const cardInitial = firstCard.current ? { x: '0%' } : { x: '45%', opacity: 0 };
 
   return (
     <div ref={ref} id="project-detail" role="region" aria-labelledby="project-detail-title">
@@ -339,26 +229,37 @@ const ProjectDetail = React.forwardRef<HTMLDivElement, DetailProps>(({ index, en
         </div>
       </div>
 
-      {/* Stage: the card swings left, the tiles slide in beside it. */}
-      <div className="relative mt-8 grid grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] items-center gap-3 sm:gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+      {/* Stage: the card settles flat, the tiles slide in beside it (below it on phones). */}
+      <div className="relative mt-8 grid gap-7 sm:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] sm:items-center sm:gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
         <div className="relative">
           <motion.div
             key={project.name}
             layoutId={project.name === entry ? `card-${project.name}` : undefined}
             transition={spring}
-            className="relative z-10 -ml-[42%] w-[142%] sm:-ml-[14%] sm:w-[114%] lg:-ml-[7%] lg:w-[107%]"
+            className="relative z-10 w-full"
           >
             <motion.div
               initial={cardInitial}
-              animate={{ rotateY: reduce ? 0 : -16, x: '0%', opacity: 1, transformPerspective: 1300 }}
+              animate={{ x: '0%', opacity: 1 }}
               transition={{ ...spring, delay: firstCard.current ? 0.3 : 0 }}
             >
-              <CardFace project={project} large />
+              {/* Clicking the open card again puts it back with the others. */}
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label={`Close ${project.name} and show all projects`}
+                title="Back to all projects"
+                className="group block w-full rounded-[1.6rem] text-left"
+              >
+                <div className="transition duration-300 group-hover:-translate-y-1 group-hover:brightness-110">
+                  <CardFace project={project} large />
+                </div>
+              </button>
             </motion.div>
           </motion.div>
         </div>
 
-        <motion.ul key={project.name} variants={tileList} initial="hidden" animate="show" className="grid grid-cols-2 gap-x-1 gap-y-5 sm:gap-x-4 lg:grid-cols-3">
+        <motion.ul key={project.name} variants={tileList} initial="hidden" animate="show" className="grid grid-cols-3 gap-x-2 gap-y-5 sm:grid-cols-2 sm:gap-x-4 lg:grid-cols-3">
           {tilesFor(project, showDetails).map((tile) => (
             <motion.li key={tile.label} variants={tileItem}>
               <Tile {...tile} />
@@ -544,15 +445,26 @@ export const Projects: React.FC = () => {
           Things I&apos;ve <span className="text-gradient">built.</span>
         </>
       }
-      description="Backend-heavy work first. Open a card to see the problem, what I built and the key technical decisions."
+      description="Backend-heavy work first. Scroll through the highlights, or open any project below for the full details."
     >
-      <LayoutGroup>
-        {active !== null ? (
-          <ProjectDetail ref={detailRef} index={active} entry={entry} onClose={close} onSelect={setActive} />
-        ) : (
-          <ProjectGrid onOpen={open} buttonRefs={buttonRefs} />
-        )}
-      </LayoutGroup>
+      <ProjectShowcase projects={featuredProjects.slice(0, SHOWCASE_COUNT)} onOpen={open} skipTo="all-projects" />
+
+      <div id="all-projects" className="pt-20 md:pt-28">
+        <div className="mb-8 flex items-end justify-between gap-4">
+          <div>
+            <p className="eyebrow">Index</p>
+            <h3 className="mt-3 font-display text-2xl font-semibold tracking-tight text-white md:text-3xl">All projects</h3>
+          </div>
+          <p className="hidden text-sm text-slate-400 sm:block">Open a card for the full details.</p>
+        </div>
+        <LayoutGroup>
+          {active !== null ? (
+            <ProjectDetail ref={detailRef} index={active} entry={entry} onClose={close} onSelect={setActive} />
+          ) : (
+            <ProjectGrid onOpen={open} buttonRefs={buttonRefs} />
+          )}
+        </LayoutGroup>
+      </div>
       <Archive />
     </Section>
   );
